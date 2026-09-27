@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+
+# Real data never goes in git. Only the generated sample workbook is tracked.
+data/*
+!data/sample-tickets.xlsx
+# Excel lock files (created while a workbook is open)
+~$*
+
+# Per-machine Claude Code settings
+.claude/settings.local.json

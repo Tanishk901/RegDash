@@ -1,0 +1,94 @@
+import type { Priority, TicketStatus, TicketType } from "@regdash/shared";
+
+/**
+ * Real data is messy: Excel sheets say "WIP", "Awaiting user", "1 - Critical",
+ * ServiceNow display values vary by instance. Every source funnels its raw
+ * strings through these functions so the rest of the app sees one vocabulary.
+ */
+
+const clean = (s: string) => s.trim().toLowerCase().replace(/[\s_-]+/g, " ");
+
+export function normalizeStatus(raw: unknown): TicketStatus | null {
+  if (raw == null) return null;
+  const s = clean(String(raw));
+  if (!s) return null;
+  if (/^(new|open|logged|submitted|draft)$/.test(s)) return "NEW";
+  if (/(in progress|wip|work in progress|assigned|active|working)/.test(s)) return "IN_PROGRESS";
+  if (/(hold|pending|awaiting|waiting|blocked)/.test(s)) return "ON_HOLD";
+  if (/(resolved|fixed|completed? pending)/.test(s)) return "RESOLVED";
+  if (/(closed|complete|cancel+ed|skipped|done)/.test(s)) return "CLOSED";
+  return null;
+}
+
+export function normalizePriority(raw: unknown): Priority | null {
+  if (raw == null) return null;
+  const s = clean(String(raw));
+  if (!s) return null;
+  // "1", "P1", "1 - Critical", "p1 critical"
+  const digit = s.match(/^p?\s*([1-5])\b/);
+  if (digit) {
+    const n = Number(digit[1]);
+    return (n >= 4 ? "P4" : `P${n}`) as Priority;
+  }
+  if (/critical|urgent|sev ?1/.test(s)) return "P1";
+  if (/high|sev ?2/.test(s)) return "P2";
+  if (/moderate|medium|normal|sev ?3/.test(s)) return "P3";
+  if (/low|planning|sev ?4/.test(s)) return "P4";
+  return null;
+}
+
+export function inferType(number: string, raw?: unknown): TicketType | null {
+  if (raw != null && String(raw).trim()) {
+    const s = clean(String(raw));
+    if (/^(inc|incident)/.test(s)) return "INCIDENT";
+    if (/^(sr|service request|request|req|ritm|sctask|task)/.test(s)) return "SR";
+  }
+  const n = number.trim().toUpperCase();
+  if (n.startsWith("INC")) return "INCIDENT";
+  if (/^(RITM|REQ|SCTASK|SR)/.test(n)) return "SR";
+  return null;
+}
+
+/** Accepts Date, ISO strings, "26/09/2026 14:05", "2026-09-26 14:05:00", Excel serials. */
+export function normalizeDate(raw: unknown): string | null {
+  if (raw == null || raw === "") return null;
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw.toISOString();
+  if (typeof raw === "number") {
+    // Excel serial date (days since 1899-12-30)
+    const ms = Math.round((raw - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  const s = String(raw).trim();
+  // dd/mm/yyyy [hh:mm[:ss]] — the Indian/UK format Excel exports usually use
+  const dmy = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (dmy) {
+    const [, dd, mm, yyyy, hh = "0", mi = "0", ss = "0"] = dmy;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi), Number(ss));
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  // ServiceNow "yyyy-mm-dd hh:mm:ss" (UTC in the API's value field)
+  const sn = s.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/);
+  const d = new Date(sn ? `${sn[1]}T${sn[2]}Z` : s);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+export function normalizeText(raw: unknown): string | null {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  return s ? s : null;
+}
+
+/**
+ * Convention for sources with no native "next action"/"blocker" fields
+ * (ServiceNow): the team writes work notes like
+ *   "Next: waiting for user to confirm role"
+ *   "Blocker: vendor ticket #123 open"
+ * The newest matching line wins.
+ */
+export function extractTagged(text: string | null, tag: "next" | "blocker" | "pending"): string | null {
+  if (!text) return null;
+  const re = new RegExp(`^\\s*${tag}(?: action| owner| on)?\\s*[:\\-]\\s*(.+)$`, "im");
+  const m = text.match(re);
+  return m?.[1]?.trim() ?? null;
+}
