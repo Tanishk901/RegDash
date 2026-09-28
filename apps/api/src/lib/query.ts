@@ -4,6 +4,7 @@ import {
   STATUSES,
   toView,
   type DashboardSummary,
+  type OwnerWorkload,
   type Priority,
   type SlaState,
   type SortKey,
@@ -12,6 +13,9 @@ import {
   type TicketStatus,
   type TicketView,
 } from "@regdash/shared";
+
+/** Owner name used for tickets nobody has picked up. */
+const UNASSIGNED = "Unassigned";
 
 const PRIORITY_RANK: Record<Priority, number> = { P1: 0, P2: 1, P3: 2, P4: 3 };
 // Paused tickets are waiting on others, so they sort after everything the team can act on.
@@ -63,15 +67,27 @@ export function summarize(
   meta: { lastRefreshedAt: string | null; source: Ticket["source"] },
 ): DashboardSummary {
   const open = tickets.filter((t) => OPEN_STATUSES.includes(t.status)).map((t) => toView(t, now));
-  const byPriority = Object.fromEntries(PRIORITIES.map((p) => [p, 0])) as Record<Priority, number>;
+  const zeroByPriority = () => Object.fromEntries(PRIORITIES.map((p) => [p, 0])) as Record<Priority, number>;
+  const byPriority = zeroByPriority();
   const byStatus = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<TicketStatus, number>;
-  const owners = new Map<string, number>();
+  const owners = new Map<string, OwnerWorkload>();
 
   for (const t of tickets) byStatus[t.status]++;
   for (const t of open) {
     byPriority[t.priority]++;
-    const o = t.assignedTo ?? "Unassigned";
-    owners.set(o, (owners.get(o) ?? 0) + 1);
+    const name = t.assignedTo ?? UNASSIGNED;
+    let w = owners.get(name);
+    if (!w) {
+      w = { owner: name, count: 0, byPriority: zeroByPriority(), breached: 0, atRisk: 0, onHold: 0, stale: 0, estimatedHours: 0 };
+      owners.set(name, w);
+    }
+    w.count++;
+    w.byPriority[t.priority]++;
+    if (t.sla === "BREACHED") w.breached++;
+    if (t.sla === "AT_RISK") w.atRisk++;
+    if (t.status === "ON_HOLD") w.onHold++;
+    if (t.stale) w.stale++;
+    w.estimatedHours += t.estimatedHours ?? 0;
   }
 
   return {
@@ -84,9 +100,7 @@ export function summarize(
     slaAtRisk: open.filter((t) => t.sla === "AT_RISK").length,
     stale: open.filter((t) => t.stale).length,
     onHold: open.filter((t) => t.status === "ON_HOLD").length,
-    byOwner: [...owners.entries()]
-      .map(([owner, count]) => ({ owner, count }))
-      .sort((a, b) => b.count - a.count),
+    byOwner: [...owners.values()].sort((a, b) => b.count - a.count),
     lastRefreshedAt: meta.lastRefreshedAt,
     source: meta.source,
   };

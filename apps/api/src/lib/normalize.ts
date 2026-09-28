@@ -73,6 +73,45 @@ export function normalizeDate(raw: unknown): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+export type DurationUnit = "hours" | "minutes";
+
+const EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30);
+const UNIT_HOURS: Record<string, number> = { d: 24, h: 1, m: 1 / 60 };
+
+/**
+ * Hand-typed durations → hours. Accepts "2h", "1.5 hrs", "30 min", "1d 4h",
+ * "2:30" (h:mm), Excel time cells (Date on the 1899-12-30 epoch) and bare
+ * numbers, which are read as `bareUnit` because the tracker doesn't say.
+ */
+export function normalizeDuration(raw: unknown, bareUnit: DurationUnit = "hours"): number | null {
+  if (raw == null || raw === "") return null;
+  const bare = (n: number) => (bareUnit === "minutes" ? n / 60 : n);
+  if (raw instanceof Date) {
+    const h = (raw.getTime() - EXCEL_EPOCH_MS) / 3600_000;
+    return isNaN(h) || h < 0 ? null : h;
+  }
+  if (typeof raw === "number") return raw >= 0 ? bare(raw) : null;
+  const s = String(raw).trim().toLowerCase();
+  if (/^\d+(\.\d+)?$/.test(s)) return bare(Number(s));
+  const hm = s.match(/^(\d+):(\d{2})$/);
+  if (hm) return Number(hm[1]) + Number(hm[2]) / 60;
+  let total = 0;
+  let found = false;
+  for (const m of s.matchAll(/(\d+(?:\.\d+)?)\s*(d|days?|h|hrs?|hours?|m|mins?|minutes?)\b/g)) {
+    total += Number(m[1]) * UNIT_HOURS[m[2]![0]!]!;
+    found = true;
+  }
+  return found ? total : null;
+}
+
+/** "36", 36, "36 items" → 36. Anything without a positive whole number → null. */
+export function normalizeCount(raw: unknown): number | null {
+  if (raw == null || raw === "") return null;
+  const m = String(raw).match(/\d+/);
+  const n = m ? Number(m[0]) : NaN;
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 export function normalizeText(raw: unknown): string | null {
   if (raw == null) return null;
   const s = String(raw).trim();

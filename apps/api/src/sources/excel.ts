@@ -4,10 +4,13 @@ import type { Ticket } from "@regdash/shared";
 import type { SourceResult, TicketSource } from "./TicketSource";
 import {
   inferType,
+  normalizeCount,
   normalizeDate,
+  normalizeDuration,
   normalizePriority,
   normalizeStatus,
   normalizeText,
+  type DurationUnit,
 } from "../lib/normalize";
 
 /**
@@ -22,7 +25,8 @@ import {
 type Field =
   | "number" | "type" | "shortDescription" | "description" | "status" | "priority"
   | "assignedTo" | "assignmentGroup" | "pendingOwner" | "blocker" | "nextAction"
-  | "requestedBy" | "createdAt" | "updatedAt" | "pendingSince" | "slaDueAt" | "lastUpdateNote";
+  | "requestedBy" | "createdAt" | "updatedAt" | "pendingSince" | "slaDueAt" | "lastUpdateNote"
+  | "taskHours" | "itemCount";
 
 export const HEADER_ALIASES: Record<Field, string[]> = {
   number: ["number", "ticket", "ticket number", "ticket no", "inc/sr number", "id"],
@@ -42,9 +46,16 @@ export const HEADER_ALIASES: Record<Field, string[]> = {
   pendingSince: ["pending since", "on hold since"],
   slaDueAt: ["sla due", "due", "due date", "sla"],
   lastUpdateNote: ["latest update", "last update", "comments", "work notes", "remarks"],
+  // Hand-entered by the team. Aliases are guesses until checked against the real tracker.
+  taskHours: [
+    "avg time", "average time", "avg time per task", "average time per task", "time per task",
+    "time per item", "avg time per item", "average time per item", "time taken per task", "effort",
+  ],
+  itemCount: ["items", "no of items", "no. of items", "number of items", "item count", "n", "qty", "quantity"],
 };
 
-const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+// A trailing unit note like "Avg Time (hrs)" is ignored when matching headers.
+const norm = (s: string) => s.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/, "").replace(/\s+/g, " ");
 
 export function mapHeaders(headers: string[]): Partial<Record<Field, number>> {
   const out: Partial<Record<Field, number>> = {};
@@ -69,6 +80,7 @@ function cellValue(cell: ExcelJS.Cell): unknown {
 export function rowToTicket(
   get: (f: Field) => unknown,
   rowLabel: string,
+  timeUnit: DurationUnit = "hours",
 ): { ticket?: Ticket; reason?: string } {
   const number = normalizeText(get("number"));
   if (!number) return { reason: "missing ticket number" };
@@ -101,6 +113,8 @@ export function rowToTicket(
       updatedAt,
       pendingSince: normalizeDate(get("pendingSince")),
       slaDueAt: normalizeDate(get("slaDueAt")),
+      taskHours: normalizeDuration(get("taskHours"), timeUnit),
+      itemCount: normalizeCount(get("itemCount")),
       updates: note ? [{ at: updatedAt, by: assignedTo ?? "Tracker", note }] : [],
       source: "excel",
     },
@@ -112,6 +126,8 @@ export class ExcelSource implements TicketSource {
   constructor(
     private filePath: string,
     private sheetName: string,
+    /** How to read a bare number in the time-per-task column. */
+    private timeUnit: DurationUnit = "hours",
   ) {}
 
   async fetchTickets(): Promise<SourceResult> {
@@ -145,7 +161,7 @@ export class ExcelSource implements TicketSource {
         return idx === undefined ? null : cellValue(row.getCell(idx + 1));
       };
       const label = `row ${rowNumber}`;
-      const { ticket, reason } = rowToTicket(get, label);
+      const { ticket, reason } = rowToTicket(get, label, this.timeUnit);
       if (!ticket) return rejected.push({ row: label, reason: reason! });
       if (seen.has(ticket.number)) return rejected.push({ row: label, reason: `duplicate ${ticket.number}` });
       seen.add(ticket.number);

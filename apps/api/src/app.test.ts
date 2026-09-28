@@ -65,6 +65,39 @@ describe("API", () => {
     expect(byP).toBe(s.totalOpen);
   });
 
+  it("workload per owner adds up to the open total", async () => {
+    const s = (await request(app).get("/api/summary")).body;
+    const sum = s.byOwner.reduce((a: number, w: { count: number }) => a + w.count, 0);
+    expect(sum).toBe(s.totalOpen);
+    for (const w of s.byOwner) {
+      const byP = Object.values(w.byPriority as Record<string, number>).reduce((a, b) => a + b, 0);
+      expect(byP).toBe(w.count);
+    }
+  });
+
+  it("exports the filtered list as CSV", async () => {
+    const json = await request(app).get("/api/tickets?type=SR");
+    const res = await request(app).get("/api/tickets.csv?type=SR");
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/text\/csv/);
+    expect(res.headers["content-disposition"]).toMatch(/attachment; filename="regdash-tickets-.*\.csv"/);
+    const lines = res.text.trim().split("\r\n");
+    expect(lines[0]).toContain("Number,Type,Summary");
+    expect(lines).toHaveLength(json.body.total + 1);
+  });
+
+  it("guards CSV cells against formula injection", async () => {
+    const { ticketsToCsv } = await import("./lib/csv");
+    const t = { ...(await request(app).get("/api/tickets")).body.items[0], shortDescription: "=HYPERLINK(\"x\")" };
+    expect(ticketsToCsv([t])).toContain(`"'=HYPERLINK(""x"")"`);
+  });
+
+  it("exposes the ServiceNow URL for links only when configured", async () => {
+    expect((await request(app).get("/api/health")).body.servicenowUrl).toBeNull();
+    const withSn = createApp(store, { servicenowUrl: "https://example.service-now.com" });
+    expect((await request(withSn).get("/api/health")).body.servicenowUrl).toBe("https://example.service-now.com");
+  });
+
   it("keeps serving last good data when a refresh fails", async () => {
     let calls = 0;
     const flaky = new TicketStore({

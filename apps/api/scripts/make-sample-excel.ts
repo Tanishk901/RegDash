@@ -42,6 +42,8 @@ ws.columns = [
   { header: "Pending Since", key: "pendingSince", width: 17 },
   { header: "SLA Due", key: "slaDue", width: 17 },
   { header: "Latest Update", key: "note", width: 50 },
+  { header: "Avg Time (hrs)", key: "taskHours", width: 14 },
+  { header: "No. of Items", key: "itemCount", width: 12 },
 ];
 ws.getRow(1).font = { bold: true };
 ws.views = [{ state: "frozen", ySplit: 1 }];
@@ -64,6 +66,8 @@ for (const t of generateMockTickets()) {
     pendingSince: dmy(t.pendingSince),
     slaDue: "",
     note: t.updates.at(-1)?.note ?? "",
+    taskHours: t.taskHours ?? "",
+    itemCount: t.itemCount ?? "",
   });
 }
 

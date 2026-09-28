@@ -23,9 +23,9 @@ import {
  */
 
 type SnField = { value: string; display_value: string };
-type SnRecord = Record<string, SnField | undefined>;
+export type SnRecord = Record<string, SnField | undefined>;
 
-const FIELDS = [
+export const FIELDS = [
   "number", "short_description", "description", "state", "priority",
   "assigned_to", "assignment_group", "opened_by", "caller_id", "requested_for",
   "opened_at", "sys_updated_on", "hold_reason", "due_date", "comments_and_work_notes",
@@ -96,6 +96,9 @@ export function mapRecord(r: SnRecord, type: TicketType): { ticket?: Ticket; rea
       updatedAt: normalizeDate(v(r, "sys_updated_on")) ?? createdAt,
       pendingSince: null, // needs sys_audit history — Phase 1.1
       slaDueAt: normalizeDate(v(r, "due_date")),
+      // Hand-entered in the Excel tracker only; no known ServiceNow field holds these.
+      taskHours: null,
+      itemCount: null,
       updates: updates.reverse(), // oldest → newest for the timeline
       source: "servicenow",
     },

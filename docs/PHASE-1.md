@@ -138,6 +138,12 @@ The one shape the UI sees is `Ticket` in `packages/shared/src/types.ts`. The API
 | `pendingSince` | Pending Since | ⏳ needs `sys_audit`, Phase 1.1 |
 | `slaDueAt` | SLA Due, Due Date | `due_date` (real SLAs live in `task_sla`, Phase 1.1) |
 | `updates[]` | Latest Update, Comments, Remarks | `comments_and_work_notes` journal |
+| `taskHours` | Avg Time, Time per Task, Time per Item, Effort (hand-entered; "30 min", "2h", "1d 4h", h:mm, or a bare number in `EXCEL_TIME_UNIT`) | none (Excel only) |
+| `itemCount` | Items, No. of Items, Number of Items, Qty | none (Excel only) |
+
+A trailing unit note in a header is ignored, so "Avg Time (hrs)" matches "Avg Time". The `taskHours` / `itemCount` aliases are guesses and must be checked against the real tracker.
+
+Derived at read time: `pendingHours` (time since `pendingSince`, on-hold tickets only) and `estimatedHours` = `taskHours × itemCount` (only when both are recorded).
 
 ### Status vocabulary
 `NEW` · `IN_PROGRESS` · `ON_HOLD` (waiting on someone outside the team) · `RESOLVED` · `CLOSED`
@@ -194,7 +200,12 @@ If the source provides a due date, RegDash uses it. Otherwise it applies **place
 | POST | `/api/refresh` | force a re-pull from the source |
 | GET | `/api/summary` | tile counts, by priority, status and owner |
 | GET | `/api/tickets` | list. Query: `type`, `status` (csv), `priority` (csv), `sla`, `stale`, `assignedTo` (`__unassigned` for none), `q`, `includeClosed`, `sort` (`sla\|priority\|age\|updated`), `dir` |
+| GET | `/api/tickets.csv` | same filters as `/api/tickets`, as a CSV download |
 | GET | `/api/tickets/:number` | one ticket with derived fields |
+
+`/api/summary` → `byOwner` carries each owner's open tickets by priority, breached, at risk, on hold, stale and estimated effort (the **Team workload** tab). `/api/health` → `servicenowUrl` is set when `SERVICENOW_BASE_URL` is configured and enables "Open in ServiceNow" in the detail panel (`{base}/nav_to.do?uri=<table>.do?sysparm_query=number=<number>`, table from the INC / RITM / REQ / SCTASK prefix, not yet tried on the real instance).
+
+**ServiceNow connection check:** `pnpm sn:check` makes one small read-only GET per table and reports login, table access, matching ticket count, missing fields and unrecognised state/priority values. Run it on the work machine before switching `DATA_SOURCE=servicenow`.
 
 ---
 

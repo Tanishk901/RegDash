@@ -9,7 +9,7 @@ export function createSource(cfg: Config): TicketSource {
     case "mock":
       return new MockSource();
     case "excel":
-      return new ExcelSource(cfg.EXCEL_PATH, cfg.EXCEL_SHEET);
+      return new ExcelSource(cfg.EXCEL_PATH, cfg.EXCEL_SHEET, cfg.EXCEL_TIME_UNIT);
     case "servicenow": {
       const { SERVICENOW_BASE_URL, SERVICENOW_USERNAME, SERVICENOW_PASSWORD } = cfg;
       if (!SERVICENOW_BASE_URL || !SERVICENOW_USERNAME || !SERVICENOW_PASSWORD) {

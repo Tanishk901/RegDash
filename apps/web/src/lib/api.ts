@@ -14,6 +14,23 @@ export interface Health {
   lastRefreshedAt: string | null;
   lastError: string | null;
   rejectedRows: { row: string; reason: string }[];
+  /** Set when SERVICENOW_BASE_URL is configured; enables "Open in ServiceNow" links. */
+  servicenowUrl: string | null;
+}
+
+const SN_TABLE_BY_PREFIX: [prefix: string, table: string][] = [
+  ["INC", "incident"],
+  ["RITM", "sc_req_item"],
+  ["REQ", "sc_request"],
+  ["SCTASK", "sc_task"],
+];
+
+/** Link that opens a ticket in ServiceNow by its number, or null if the number's table is unknown. */
+export function serviceNowLink(baseUrl: string, number: string): string | null {
+  const table = SN_TABLE_BY_PREFIX.find(([p]) => number.toUpperCase().startsWith(p))?.[1];
+  if (!table) return null;
+  const target = `${table}.do?sysparm_query=number=${number}`;
+  return `${baseUrl.replace(/\/+$/, "")}/nav_to.do?uri=${encodeURIComponent(target)}`;
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -28,6 +45,8 @@ async function get<T>(path: string): Promise<T> {
 export const api = {
   summary: () => get<DashboardSummary>("/api/summary"),
   tickets: (params: URLSearchParams) => get<TicketList>(`/api/tickets?${params}`),
+  /** Download URL for the same filtered list as CSV. */
+  ticketsCsvUrl: (params: URLSearchParams) => `/api/tickets.csv?${params}`,
   ticket: (number: string) => get<TicketView>(`/api/tickets/${encodeURIComponent(number)}`),
   health: () => get<Health>("/api/health"),
   refresh: () => fetch("/api/refresh", { method: "POST" }),

@@ -1,5 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { extractTagged, inferType, normalizeDate, normalizePriority, normalizeStatus } from "./normalize";
+import {
+  extractTagged,
+  inferType,
+  normalizeCount,
+  normalizeDate,
+  normalizeDuration,
+  normalizePriority,
+  normalizeStatus,
+} from "./normalize";
+
+describe("normalizeDuration", () => {
+  it.each([
+    ["2h", 2],
+    ["1.5 hrs", 1.5],
+    ["30 min", 0.5],
+    ["1d 4h", 28],
+    ["2 hours 30 mins", 2.5],
+    ["2:30", 2.5],
+    ["3", 3],
+    [3, 3],
+    [new Date(Date.UTC(1899, 11, 30, 2, 30)), 2.5], // Excel time-formatted cell
+  ])("%s → %s hours", (raw, hours) => {
+    expect(normalizeDuration(raw)).toBeCloseTo(hours);
+  });
+  it("reads bare numbers in the configured unit", () => {
+    expect(normalizeDuration("45", "minutes")).toBe(0.75);
+    expect(normalizeDuration(90, "minutes")).toBe(1.5);
+  });
+  it("returns null for blanks and nonsense", () => {
+    expect(normalizeDuration("")).toBeNull();
+    expect(normalizeDuration("tbd")).toBeNull();
+    expect(normalizeDuration(null)).toBeNull();
+  });
+});
+
+describe("normalizeCount", () => {
+  it.each([["36", 36], [36, 36], ["36 items", 36], ["", null], ["none", null], [0, null]])("%s → %s", (raw, n) => {
+    expect(normalizeCount(raw)).toBe(n);
+  });
+});
 
 describe("normalizeStatus", () => {
   it.each([

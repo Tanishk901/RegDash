@@ -104,6 +104,9 @@ export function generateMockTickets(count = 42, seed = 20260927, now = new Date(
     }
 
     const onHold = status === "ON_HOLD";
+    // Most tickets get a time-per-task estimate; about half also cover several items.
+    const taskHours = rand() < 0.8 ? pick(rand, [0.25, 0.5, 1, 2, 4] as const) : null;
+    const itemCount = rand() < 0.5 ? pick(rand, [1, 5, 12, 36] as const) : null;
     tickets.push({
       number: type === "INCIDENT" ? `INC00${incNo++}` : `RITM000${ritmNo++}`,
       type,
@@ -121,6 +124,8 @@ export function generateMockTickets(count = 42, seed = 20260927, now = new Date(
       updatedAt: updatedAt.toISOString(),
       pendingSince: onHold ? updatedAt.toISOString() : null,
       slaDueAt: null,
+      taskHours,
+      itemCount,
       updates,
       source: "mock",
     });

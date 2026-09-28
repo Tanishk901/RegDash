@@ -51,6 +51,11 @@ export interface Ticket {
   /** SLA due date if the source provides one; otherwise computed from priority. */
   slaDueAt: string | null;
 
+  /** Time one task/item takes, in hours, entered by hand in the tracker. null = not recorded. */
+  taskHours: number | null;
+  /** How many items the ticket covers (e.g. 36 items to add to prod). null = not recorded. */
+  itemCount: number | null;
+
   updates: TicketUpdate[];
   /** Which source produced this record. */
   source: "mock" | "excel" | "servicenow";
@@ -63,6 +68,24 @@ export interface TicketView extends Ticket {
   sla: SlaState;
   /** true when no update in STALE_AFTER_HOURS */
   stale: boolean;
+  /** Hours in the current pending state; null unless ON_HOLD with a known pendingSince. */
+  pendingHours: number | null;
+  /** taskHours × itemCount; null unless both are recorded. */
+  estimatedHours: number | null;
+}
+
+/** One row of the team workload view: an owner's open tickets. */
+export interface OwnerWorkload {
+  owner: string;
+  /** Open tickets. */
+  count: number;
+  byPriority: Record<Priority, number>;
+  breached: number;
+  atRisk: number;
+  onHold: number;
+  stale: number;
+  /** Sum of estimatedHours over open tickets that have one. */
+  estimatedHours: number;
 }
 
 export interface TicketFilters {
@@ -88,7 +111,7 @@ export interface DashboardSummary {
   slaAtRisk: number;
   stale: number;
   onHold: number;
-  byOwner: { owner: string; count: number }[];
+  byOwner: OwnerWorkload[];
   lastRefreshedAt: string | null;
   source: Ticket["source"];
 }

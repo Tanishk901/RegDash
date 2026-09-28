@@ -4,6 +4,7 @@ import { Filters } from "./components/Filters";
 import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
 import { TicketTable } from "./components/TicketTable";
+import { Workload } from "./components/Workload";
 import { api, usePolling } from "./lib/api";
 
 const REFRESH_MS = 60_000;
@@ -42,6 +43,7 @@ function Dashboard() {
 
   const h = health.data;
   const last = summary.data?.lastRefreshedAt;
+  const view = params.get("view") === "workload" ? "workload" : "tickets";
 
   return (
     <div className="app">
@@ -90,20 +92,44 @@ function Dashboard() {
           summary={summary.data}
           params={params}
           onPick={(f) =>
-            update({ type: null, status: null, priority: null, sla: null, assignedTo: null, stale: null, sort: null, ...f })
+            update({ view: null, type: null, status: null, priority: null, sla: null, assignedTo: null, stale: null, sort: null, ...f })
           }
         />
       )}
 
-      <Filters params={params} owners={list.data?.owners ?? []} onChange={update} />
+      <nav className="tabs" aria-label="View">
+        <button className={view === "tickets" ? "tab active" : "tab"} aria-pressed={view === "tickets"} onClick={() => update({ view: null })}>
+          Tickets
+        </button>
+        <button className={view === "workload" ? "tab active" : "tab"} aria-pressed={view === "workload"} onClick={() => update({ view: "workload" })}>
+          Team workload
+        </button>
+      </nav>
 
-      <div className="count muted">
-        {list.data ? `${list.data.total} ticket${list.data.total === 1 ? "" : "s"}` : list.loading ? "Loading…" : ""}
-      </div>
+      {view === "workload" ? (
+        summary.data && (
+          <Workload rows={summary.data.byOwner} onPick={(owner) => update({ view: null, assignedTo: owner })} />
+        )
+      ) : (
+        <>
+          <Filters params={params} owners={list.data?.owners ?? []} onChange={update} />
 
-      {list.data && <TicketTable items={list.data.items} selected={number} onOpen={open} />}
+          <div className="count muted">
+            <span>
+              {list.data ? `${list.data.total} ticket${list.data.total === 1 ? "" : "s"}` : list.loading ? "Loading…" : ""}
+            </span>
+            {!!list.data?.total && (
+              <a className="button" href={api.ticketsCsvUrl(params)} download>
+                Export CSV
+              </a>
+            )}
+          </div>
 
-      {number && <TicketDetail number={number} onClose={close} />}
+          {list.data && <TicketTable items={list.data.items} selected={number} onOpen={open} />}
+        </>
+      )}
+
+      {number && <TicketDetail number={number} servicenowUrl={h?.servicenowUrl ?? null} onClose={close} />}
     </div>
   );
 }

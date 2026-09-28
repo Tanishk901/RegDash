@@ -7,6 +7,8 @@ const Env = z.object({
 
   EXCEL_PATH: z.string().default("../../data/sample-tickets.xlsx"),
   EXCEL_SHEET: z.string().default("Tickets"),
+  /** Unit for a bare number in the tracker's time-per-task column ("2" = 2 hours or 2 minutes?). */
+  EXCEL_TIME_UNIT: z.enum(["hours", "minutes"]).default("hours"),
 
   SERVICENOW_BASE_URL: z.string().optional(),
   SERVICENOW_USERNAME: z.string().optional(),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeSla, formatDuration, toView } from "./sla";
+import { computeSla, formatDuration, formatEffort, toView } from "./sla";
 import type { Ticket } from "./types";
 
 const base: Ticket = {
@@ -18,6 +18,8 @@ const base: Ticket = {
   updatedAt: "2026-01-01T00:00:00Z",
   pendingSince: null,
   slaDueAt: null,
+  taskHours: null,
+  itemCount: null,
   updates: [],
   source: "mock",
 };
@@ -51,6 +53,24 @@ describe("toView", () => {
     const v = toView(base, new Date("2026-01-04T00:00:00Z"));
     expect(v.stale).toBe(true);
     expect(Math.round(v.ageHours)).toBe(72);
+  });
+  it("computes pending time only for on-hold tickets", () => {
+    const now = new Date("2026-01-03T00:00:00Z");
+    const held = { ...base, status: "ON_HOLD" as const, pendingSince: "2026-01-02T00:00:00Z" };
+    expect(toView(held, now).pendingHours).toBe(24);
+    expect(toView({ ...held, status: "IN_PROGRESS" }, now).pendingHours).toBeNull();
+  });
+  it("estimates total time as time per task × items", () => {
+    expect(toView({ ...base, taskHours: 0.5, itemCount: 36 }).estimatedHours).toBe(18);
+    expect(toView({ ...base, taskHours: 0.5 }).estimatedHours).toBeNull();
+  });
+});
+
+describe("formatEffort", () => {
+  it("keeps effort in hours", () => {
+    expect(formatEffort(72)).toBe("72h");
+    expect(formatEffort(1.25)).toBe("1.3h");
+    expect(formatEffort(0.25)).toBe("15m");
   });
 });
 

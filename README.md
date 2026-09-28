@@ -20,7 +20,7 @@ regdash/
 
 ## Quick start
 
-Needs **Node 20+** and **pnpm** (`npm i -g pnpm` or `corepack enable`).
+Needs **Node 22.9+** (the API loads `.env` with `--env-file-if-exists`) and **pnpm** (`npm i -g pnpm` or `corepack enable`).
 
 ```bash
 pnpm install
@@ -59,10 +59,11 @@ For the **real tracker**, copy the file and check its headers against the alias 
 | `pnpm typecheck` | strict TypeScript across all packages |
 | `pnpm build` | typecheck + production build of the web app |
 | `pnpm sample:excel` | regenerate the sample tracker workbook |
+| `pnpm sn:check` | read-only ServiceNow connection check (work machine, needs `SERVICENOW_*` in `.env`) |
 
 ## API
 
-`GET /api/health` · `POST /api/refresh` · `GET /api/summary` · `GET /api/tickets?type=&status=&priority=&sla=&stale=&assignedTo=&q=&includeClosed=&sort=&dir=` · `GET /api/tickets/:number`
+`GET /api/health` · `POST /api/refresh` · `GET /api/summary` · `GET /api/tickets?type=&status=&priority=&sla=&stale=&assignedTo=&q=&includeClosed=&sort=&dir=` · `GET /api/tickets.csv?…same filters` · `GET /api/tickets/:number`
 
 ## Before showing it to anyone
 

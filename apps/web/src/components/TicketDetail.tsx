@@ -1,13 +1,22 @@
 import { useEffect } from "react";
-import { formatDuration, slaDueAt } from "@regdash/shared";
-import { api, usePolling } from "../lib/api";
+import { formatDuration, formatEffort, slaDueAt } from "@regdash/shared";
+import { api, serviceNowLink, usePolling } from "../lib/api";
 import { PriorityBadge, SlaBadge, StatusBadge, TypeTag } from "./Badges";
 
 const fmt = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
 
-export function TicketDetail({ number, onClose }: { number: string; onClose: () => void }) {
+export function TicketDetail({
+  number,
+  servicenowUrl,
+  onClose,
+}: {
+  number: string;
+  servicenowUrl: string | null;
+  onClose: () => void;
+}) {
   const { data: t, error } = usePolling(() => api.ticket(number), [number]);
+  const snLink = servicenowUrl ? serviceNowLink(servicenowUrl, number) : null;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -23,7 +32,14 @@ export function TicketDetail({ number, onClose }: { number: string; onClose: () 
           <h2 className="mono">
             {t && <TypeTag t={t.type} />} {number}
           </h2>
-          <button className="icon" onClick={onClose} aria-label="Close">×</button>
+          <div className="detail-actions">
+            {snLink && (
+              <a className="button" href={snLink} target="_blank" rel="noreferrer">
+                Open in ServiceNow ↗
+              </a>
+            )}
+            <button className="icon" onClick={onClose} aria-label="Close">×</button>
+          </div>
         </header>
 
         {error && <p className="error">Couldn't load ticket: {error}</p>}
@@ -64,7 +80,26 @@ export function TicketDetail({ number, onClose }: { number: string; onClose: () 
               <dt>Requested by</dt><dd>{t.requestedBy ?? "—"}</dd>
               <dt>Created</dt><dd>{fmt(t.createdAt)} <span className="muted">({formatDuration(t.ageHours)} ago)</span></dd>
               <dt>Last updated</dt><dd>{fmt(t.updatedAt)} <span className="muted">({formatDuration(t.hoursSinceUpdate)} ago)</span></dd>
-              {t.pendingSince && (<><dt>Pending since</dt><dd>{fmt(t.pendingSince)}</dd></>)}
+              {t.pendingSince && (
+                <>
+                  <dt>Pending since</dt>
+                  <dd>
+                    {fmt(t.pendingSince)}
+                    {t.pendingHours != null && <span className="muted"> ({formatDuration(t.pendingHours)})</span>}
+                  </dd>
+                </>
+              )}
+              {t.taskHours != null && (<><dt>Time per task</dt><dd>{formatEffort(t.taskHours)}</dd></>)}
+              {t.itemCount != null && (<><dt>Items</dt><dd>{t.itemCount}</dd></>)}
+              {t.estimatedHours != null && (
+                <>
+                  <dt>Estimated total</dt>
+                  <dd>
+                    {formatEffort(t.estimatedHours)}{" "}
+                    <span className="muted">({formatEffort(t.taskHours!)} × {t.itemCount})</span>
+                  </dd>
+                </>
+              )}
               <dt>SLA due</dt>
               <dd>
                 {fmt(slaDueAt(t).toISOString())}

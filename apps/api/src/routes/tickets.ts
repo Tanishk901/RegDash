@@ -1,7 +1,8 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { PRIORITIES, STATUSES, toView } from "@regdash/shared";
+import { PRIORITIES, STATUSES, toView, type TicketView } from "@regdash/shared";
 import type { TicketStore } from "../lib/store";
+import { ticketsToCsv } from "../lib/csv";
 import { applyFilters, sortViews, summarize } from "../lib/query";
 
 const csv = <T extends [string, ...string[]]>(values: T) =>
@@ -23,8 +24,27 @@ const ListQuery = z.object({
   dir: z.enum(["asc", "desc"]).default("asc"),
 });
 
-export function ticketRoutes(store: TicketStore, now: () => Date = () => new Date()) {
+export interface RouteOptions {
+  now?: () => Date;
+  /** ServiceNow instance URL for "Open in ServiceNow" links. Not a secret, but kept out of git. */
+  servicenowUrl?: string;
+}
+
+export function ticketRoutes(store: TicketStore, { now = () => new Date(), servicenowUrl }: RouteOptions = {}) {
   const r = Router();
+
+  /** Parses list filters from the query string; sends a 400 and returns null if they're invalid. */
+  function list(req: Request, res: Response): TicketView[] | null {
+    const parsed = ListQuery.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+      return null;
+    }
+    const { sort, dir, ...filters } = parsed.data;
+    const at = now();
+    const views = store.all().map((t) => toView(t, at));
+    return sortViews(applyFilters(views, filters as never), sort, dir);
+  }
 
   r.get("/health", (_req, res) => {
     res.json({
@@ -34,6 +54,7 @@ export function ticketRoutes(store: TicketStore, now: () => Date = () => new Dat
       lastRefreshedAt: store.lastRefreshedAt,
       lastError: store.lastError,
       rejectedRows: store.rejectedRows(),
+      servicenowUrl: servicenowUrl ?? null,
     });
   });
 
@@ -47,15 +68,22 @@ export function ticketRoutes(store: TicketStore, now: () => Date = () => new Dat
   });
 
   r.get("/tickets", (req, res) => {
-    const parsed = ListQuery.safeParse(req.query);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
-    const { sort, dir, ...filters } = parsed.data;
-    const at = now();
-    const views = store.all().map((t) => toView(t, at));
-    const items = sortViews(applyFilters(views, filters as never), sort, dir);
+    const items = list(req, res);
+    if (!items) return;
     // Owners list for the filter dropdown, independent of the current filter.
     const owners = [...new Set(store.all().map((t) => t.assignedTo).filter((o): o is string => !!o))].sort();
     res.json({ items, total: items.length, owners });
+  });
+
+  /** Same filters as /tickets, as a spreadsheet download. */
+  r.get("/tickets.csv", (req, res) => {
+    const items = list(req, res);
+    if (!items) return;
+    const stamp = now().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+    res
+      .type("text/csv; charset=utf-8")
+      .attachment(`regdash-tickets-${stamp}.csv`)
+      .send(ticketsToCsv(items));
   });
 
   r.get("/tickets/:number", (req, res) => {

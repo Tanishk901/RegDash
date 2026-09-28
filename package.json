@@ -5,7 +5,7 @@
   "description": "RegDash — RegCreate Operations Dashboard (Phase 1: incident & SR visibility)",
   "packageManager": "pnpm@10.28.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.9"
   },
   "scripts": {
     "dev": "pnpm -r --parallel --filter @regdash/api --filter @regdash/web dev",
@@ -14,7 +14,8 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "sample:excel": "pnpm --filter @regdash/api sample:excel"
+    "sample:excel": "pnpm --filter @regdash/api sample:excel",
+    "sn:check": "pnpm --filter @regdash/api sn:check"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

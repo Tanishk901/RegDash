@@ -57,7 +57,17 @@ export function toView(ticket: Ticket, now: Date = new Date()): TicketView {
     hoursSinceUpdate,
     sla: computeSla(ticket, now),
     stale: open && hoursSinceUpdate >= STALE_AFTER_HOURS,
+    pendingHours:
+      ticket.status === "ON_HOLD" && ticket.pendingSince ? hoursBetween(ticket.pendingSince, now) : null,
+    estimatedHours:
+      ticket.taskHours != null && ticket.itemCount != null ? ticket.taskHours * ticket.itemCount : null,
   };
+}
+
+/** Effort, always in hours so it isn't read as calendar days: "72h", "1.5h", "15m". */
+export function formatEffort(hours: number): string {
+  if (hours < 1) return `${Math.round(hours * 60)}m`;
+  return `${Math.round(hours * 10) / 10}h`;
 }
 
 /** "3d 4h", "5h", "20m" */

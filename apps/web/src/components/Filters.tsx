@@ -11,7 +11,7 @@ export function Filters({
   onChange: (next: Record<string, string | null>) => void;
 }) {
   const val = (k: string) => params.get(k) ?? "";
-  const active = [...params.keys()].some((k) => k !== "sort");
+  const active = [...params.keys()].some((k) => k !== "sort" && k !== "view");
   // Marks a control whose filter is applied, so it's obvious at a glance.
   const set = (k: string) => (val(k) ? "is-set" : undefined);
 

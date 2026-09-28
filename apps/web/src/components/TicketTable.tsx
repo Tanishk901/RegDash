@@ -1,4 +1,4 @@
-import { formatDuration, type TicketView } from "@regdash/shared";
+import { formatDuration, formatEffort, type TicketView } from "@regdash/shared";
 import { PriorityBadge, SlaBadge, StatusBadge, TypeTag } from "./Badges";
 
 export function TicketTable({
@@ -25,7 +25,10 @@ export function TicketTable({
             <th>SLA</th>
             <th>Owner</th>
             <th>Pending on</th>
+            <th className="num" title="How long it has been pending (Pending Since)">Pending for</th>
             <th>Next action</th>
+            <th className="num" title="Time one task takes, from the tracker">Time / task</th>
+            <th className="num" title="Time per task × number of items">Est. total</th>
             <th className="num">Age</th>
             <th className="num">Updated</th>
           </tr>
@@ -49,7 +52,21 @@ export function TicketTable({
               <td><SlaBadge s={t.sla} /></td>
               <td>{t.assignedTo ?? <span className="muted">Unassigned</span>}</td>
               <td>{t.pendingOwner ?? <span className="muted">—</span>}</td>
+              <td className="num" title={t.pendingSince ? `Since ${new Date(t.pendingSince).toLocaleString()}` : undefined}>
+                {t.pendingHours != null ? formatDuration(t.pendingHours) : <span className="muted">—</span>}
+              </td>
               <td className="next">{t.nextAction ?? <span className="muted">Not set</span>}</td>
+              <td className="num">{t.taskHours != null ? formatEffort(t.taskHours) : <span className="muted">—</span>}</td>
+              <td className="num">
+                {t.estimatedHours != null ? (
+                  <>
+                    {formatEffort(t.estimatedHours)}
+                    <div className="muted small">{t.itemCount} items</div>
+                  </>
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </td>
               <td className="num">{formatDuration(t.ageHours)}</td>
               <td className={`num ${t.stale ? "stale" : ""}`} title={t.stale ? "No update in 48h+" : undefined}>
                 {formatDuration(t.hoursSinceUpdate)} ago

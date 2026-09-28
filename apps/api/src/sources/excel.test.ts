@@ -46,6 +46,17 @@ describe("ExcelSource", () => {
     ]);
   });
 
+  it("reads hand-entered time per task and item count", async () => {
+    const file = await writeSheet([
+      ["Number", "Status", "Created", "Avg Time (hrs)", "No. of Items"],
+      ["RITM0000301", "In Progress", "25/09/2026", "30 min", 36],
+      ["RITM0000302", "In Progress", "25/09/2026", 2, ""],
+      ["RITM0000303", "In Progress", "25/09/2026", "", ""],
+    ]);
+    const { tickets } = await new ExcelSource(file, "Tickets").fetchTickets();
+    expect(tickets.map((t) => [t.taskHours, t.itemCount])).toEqual([[0.5, 36], [2, null], [null, null]]);
+  });
+
   it("fails loudly when a required column is missing", async () => {
     const file = await writeSheet([["Summary", "Owner"], ["x", "y"]]);
     await expect(new ExcelSource(file, "Tickets").fetchTickets()).rejects.toThrow(/no column for "number"/);
