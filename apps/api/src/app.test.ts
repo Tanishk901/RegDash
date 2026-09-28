@@ -25,8 +25,14 @@ describe("API", () => {
     const statuses = new Set(res.body.items.map((t: { status: string }) => t.status));
     expect([...statuses].every((s) => ["NEW", "IN_PROGRESS", "ON_HOLD"].includes(s as string))).toBe(true);
     const slas = res.body.items.map((t: { sla: string }) => t.sla);
-    const rank = { BREACHED: 0, AT_RISK: 1, OK: 2 } as const;
+    const rank = { BREACHED: 0, AT_RISK: 1, OK: 2, PAUSED: 3 } as const;
     for (let i = 1; i < slas.length; i++) expect(rank[slas[i] as keyof typeof rank]).toBeGreaterThanOrEqual(rank[slas[i - 1] as keyof typeof rank]);
+  });
+
+  it("never counts on-hold tickets as breached or at risk", async () => {
+    const res = await request(app).get("/api/tickets?status=ON_HOLD");
+    expect(res.body.items.length).toBeGreaterThan(0);
+    for (const t of res.body.items) expect(t.sla).toBe("PAUSED");
   });
 
   it("filters by type and priority", async () => {

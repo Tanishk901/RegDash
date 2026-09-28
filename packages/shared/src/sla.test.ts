@@ -36,6 +36,10 @@ describe("computeSla", () => {
     const t = { ...base, slaDueAt: "2026-01-10T00:00:00Z" };
     expect(computeSla(t, new Date("2026-01-02T01:00:00Z"))).toBe("OK");
   });
+  it("is PAUSED while on hold, even past the due time", () => {
+    const t = { ...base, status: "ON_HOLD" as const };
+    expect(computeSla(t, new Date("2026-02-01T00:00:00Z"))).toBe("PAUSED");
+  });
   it("never alarms on resolved tickets", () => {
     const t = { ...base, status: "RESOLVED" as const };
     expect(computeSla(t, new Date("2026-02-01T00:00:00Z"))).toBe("OK");

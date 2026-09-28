@@ -34,6 +34,11 @@ export function computeSla(
 ): SlaState {
   // Closed/resolved tickets are judged elsewhere; don't alarm on them.
   if (ticket.status === "RESOLVED" || ticket.status === "CLOSED") return "OK";
+  // The team's SLA clock is paused while a ticket is pending on someone else.
+  if (ticket.status === "ON_HOLD") return "PAUSED";
+  // KNOWN GAP: after a ticket leaves ON_HOLD the clock should resume where it
+  // stopped, but the Excel tracker has no pause history, so time spent paused
+  // is still counted below. ServiceNow can fix this via task_sla (Phase 1.1).
   const created = new Date(ticket.createdAt).getTime();
   const due = slaDueAt(ticket).getTime();
   const nowMs = now.getTime();

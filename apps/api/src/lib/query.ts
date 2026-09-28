@@ -14,7 +14,8 @@ import {
 } from "@regdash/shared";
 
 const PRIORITY_RANK: Record<Priority, number> = { P1: 0, P2: 1, P3: 2, P4: 3 };
-const SLA_RANK: Record<SlaState, number> = { BREACHED: 0, AT_RISK: 1, OK: 2 };
+// Paused tickets are waiting on others, so they sort after everything the team can act on.
+const SLA_RANK: Record<SlaState, number> = { BREACHED: 0, AT_RISK: 1, OK: 2, PAUSED: 3 };
 
 export function applyFilters(views: TicketView[], f: TicketFilters): TicketView[] {
   const q = f.q?.trim().toLowerCase();

@@ -136,6 +136,7 @@ th.num { text-align: right; }
 .sla-OK { background: var(--ok-bg); color: var(--ok); }
 .sla-AT_RISK { background: var(--warn-bg); color: var(--warn); }
 .sla-BREACHED { background: var(--danger-bg); color: var(--danger); }
+.sla-PAUSED { background: var(--surface-2); color: var(--muted); }
 .type { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); margin-right: 4px; }
 .type-INCIDENT { color: var(--danger); border-color: currentColor; }
 .type-SR { color: var(--accent); border-color: currentColor; }

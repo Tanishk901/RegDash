@@ -155,6 +155,8 @@ This convention needs team buy-in, so raise it with the team lead early. If it d
 ### SLA rules
 If the source provides a due date, RegDash uses it. Otherwise it applies **placeholder** defaults: P1 4h, P2 24h, P3 72h, P4 120h (`packages/shared/src/sla.ts`). "At risk" means 75% of the window has elapsed. **Replace these with the team's real SLA matrix before showing the dashboard to anyone.**
 
+**Pending pauses the SLA.** The team puts tickets in a pending state while waiting on someone outside the team, and the SLA clock stops. RegDash shows `ON_HOLD` tickets as SLA **Paused**: never counted as breached or at risk, and sorted after everything the team can act on. When a ticket leaves pending, the clock should resume where it stopped. The Excel tracker has no pause history, so RegDash can't subtract earlier paused time yet and may overstate SLA use for tickets that were pending before. The ServiceNow source can fix this from `task_sla` (Phase 1.1).
+
 ---
 
 ## 8. Architecture

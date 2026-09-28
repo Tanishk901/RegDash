@@ -8,7 +8,7 @@ const STATUS_LABEL: Record<TicketStatus, string> = {
   CLOSED: "Closed",
 };
 
-const SLA_LABEL: Record<SlaState, string> = { OK: "On track", AT_RISK: "At risk", BREACHED: "Breached" };
+const SLA_LABEL: Record<SlaState, string> = { OK: "On track", AT_RISK: "At risk", BREACHED: "Breached", PAUSED: "Paused" };
 
 export const statusLabel = (s: TicketStatus) => STATUS_LABEL[s];
 

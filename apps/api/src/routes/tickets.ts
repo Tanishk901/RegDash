@@ -14,7 +14,7 @@ const ListQuery = z.object({
   type: z.enum(["INCIDENT", "SR"]).optional(),
   status: csv(STATUSES as [string, ...string[]]).optional(),
   priority: csv(PRIORITIES as [string, ...string[]]).optional(),
-  sla: z.enum(["OK", "AT_RISK", "BREACHED"]).optional(),
+  sla: z.enum(["OK", "AT_RISK", "BREACHED", "PAUSED"]).optional(),
   assignedTo: z.string().optional(),
   q: z.string().max(200).optional(),
   stale: z.enum(["true", "false"]).transform((v) => v === "true").optional(),

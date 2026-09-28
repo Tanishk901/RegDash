@@ -15,7 +15,8 @@ export type TicketStatus =
 /** P1 = critical ... P4 = low (ServiceNow 5 "planning" is folded into P4). */
 export type Priority = "P1" | "P2" | "P3" | "P4";
 
-export type SlaState = "OK" | "AT_RISK" | "BREACHED";
+/** PAUSED = ticket is ON_HOLD; the team's SLA clock stops while waiting on others. */
+export type SlaState = "OK" | "AT_RISK" | "BREACHED" | "PAUSED";
 
 export interface TicketUpdate {
   at: string; // ISO timestamp
