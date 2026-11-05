@@ -15,6 +15,7 @@ import type { DashboardSummary } from "@regdash/shared";
 import { ExcelUpload } from "./components/ExcelUpload";
 import { Filters } from "./components/Filters";
 import { Gauges } from "./components/Gauges";
+import { Logo, RefreshIcon } from "./components/Icons";
 import { SourceReadingPanel } from "./components/SourceReadingPanel";
 import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
@@ -93,46 +94,49 @@ function Shell() {
   const shared: Shared = { summary: summary.data, health: h, apiError: summary.error };
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <span className="logo" aria-hidden>▦</span>
-          <div>
-            <h1>RegDash</h1>
-            <p className="sub">RegCreate operations — open incidents &amp; service requests</p>
+    <>
+      <header className="appbar">
+        <div className="appbar-inner">
+          <div className="brand">
+            <Logo />
+            <div>
+              <h1>RegDash</h1>
+              <p className="sub">RegCreate operations</p>
+            </div>
           </div>
-        </div>
-        <div className="meta">
-          {h && !h.upload && <span className={`source source-${h.source}`}>Source: {h.source}</span>}
-          {h?.upload && (
-            <span className="source source-upload" title={h.upload.fileName}>Source: {h.upload.fileName}</span>
-          )}
-          <span className="muted">
-            {/* An uploaded file doesn't change, so re-reading it doesn't make the data any newer. */}
-            {h?.upload
-              ? `Uploaded ${new Date(h.upload.uploadedAt).toLocaleString()}`
-              : last
-                ? `Data as of ${new Date(last).toLocaleTimeString()}`
-                : "No data yet"}
-          </span>
-          {h?.upload && (
-            <button className="link" onClick={removeUpload} disabled={uploading}>
-              Remove upload
+          <nav className="tabs" aria-label="Pages">
+            <NavLink className={tabClass} to="/" end>Dashboard</NavLink>
+            <NavLink className={tabClass} to="/tickets">Tickets</NavLink>
+            <NavLink className={tabClass} to="/workload">Team workload</NavLink>
+          </nav>
+          <div className="meta">
+            {h && !h.upload && <span className={`source source-${h.source}`}>Source: {h.source}</span>}
+            {h?.upload && (
+              <span className="source source-upload" title={h.upload.fileName}>Source: {h.upload.fileName}</span>
+            )}
+            <span className="muted">
+              {/* An uploaded file doesn't change, so re-reading it doesn't make the data any newer. */}
+              {h?.upload
+                ? `Uploaded ${new Date(h.upload.uploadedAt).toLocaleString()}`
+                : last
+                  ? `Data as of ${new Date(last).toLocaleTimeString()}`
+                  : "No data yet"}
+            </span>
+            {h?.upload && (
+              <button className="link" onClick={removeUpload} disabled={uploading}>
+                Remove upload
+              </button>
+            )}
+            <button onClick={forceRefresh} disabled={refreshing}>
+              <RefreshIcon />
+              {refreshing ? "Refreshing…" : "Refresh"}
             </button>
-          )}
-          <ExcelUpload busy={uploading} onPick={uploadFile} />
-          <button onClick={forceRefresh} disabled={refreshing}>
-            {refreshing ? "Refreshing…" : "Refresh"}
-          </button>
+            <ExcelUpload busy={uploading} onPick={uploadFile} />
+          </div>
         </div>
       </header>
 
-      <nav className="tabs" aria-label="Pages">
-        <NavLink className={tabClass} to="/" end>Dashboard</NavLink>
-        <NavLink className={tabClass} to="/tickets">Tickets</NavLink>
-        <NavLink className={tabClass} to="/workload">Team workload</NavLink>
-      </nav>
-
+      <main className="app">
       {notice && (
         <div className={`banner banner-notice ${notice.kind === "ok" ? "banner-ok" : "banner-error"}`} role={notice.kind === "ok" ? "status" : "alert"}>
           <span>{notice.text}</span>
@@ -162,7 +166,8 @@ function Shell() {
       )}
 
       <Outlet context={shared} />
-    </div>
+      </main>
+    </>
   );
 }
 
@@ -177,7 +182,14 @@ function DashboardPage() {
   if (!summary) return null;
   return (
     <>
+      <div className="section-head">
+        <h2>Needs attention</h2>
+        <p>Share of open work in each state. Click a gauge to see its tickets.</p>
+      </div>
       <Gauges summary={summary} />
+      <div className="section-head">
+        <h2>Open work</h2>
+      </div>
       <SummaryCards summary={summary} />
     </>
   );

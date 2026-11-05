@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { UploadIcon } from "./Icons";
 
 export function ExcelUpload({ busy, onPick }: { busy: boolean; onPick: (file: File) => void }) {
   const input = useRef<HTMLInputElement>(null);
@@ -18,6 +19,7 @@ export function ExcelUpload({ busy, onPick }: { busy: boolean; onPick: (file: Fi
         }}
       />
       <button onClick={() => input.current?.click()} disabled={busy}>
+        <UploadIcon />
         {busy ? "Working…" : "Upload Excel"}
       </button>
     </>
