@@ -29,6 +29,15 @@ pnpm dev          # API on :4000, dashboard on http://localhost:5173
 
 That runs on **mock data** with zero setup. No real company data is involved.
 
+## Pages
+
+| URL | Shows |
+|---|---|
+| `/` | Dashboard: the gauges and totals. Click one to see its tickets |
+| `/tickets` | Ticket table with filters. Filters stay in the URL, so a view can be shared |
+| `/tickets/INC0012345` | The same table with that ticket's detail panel open |
+| `/workload` | Open tickets per engineer |
+
 ## Switching data sources
 
 ```bash

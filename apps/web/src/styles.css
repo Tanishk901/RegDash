@@ -74,6 +74,7 @@ button {
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: .6; cursor: default; }
 button.link { border: none; background: none; color: var(--accent); padding: 6px 4px; }
+a.tab { display: inline-block; text-decoration: none; }
 a.button {
   display: inline-block; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   padding: 6px 12px; color: inherit; text-decoration: none; font-size: 13px; white-space: nowrap;
@@ -81,7 +82,7 @@ a.button {
 a.button:hover { border-color: var(--accent); }
 
 /* ---------- view tabs ---------- */
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
 .tab { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 12px; color: var(--muted); }
 .tab:hover:not(:disabled) { color: var(--text); border-bottom-color: var(--border); }
 .tab.active { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
@@ -100,22 +101,17 @@ a.button:hover { border-color: var(--accent); }
 .card {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
   padding: 14px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); text-align: left;
+  color: inherit; text-decoration: none;
 }
+.card:hover { border-color: var(--accent); }
 .card-value { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .card-label { font-size: 13px; color: var(--muted); }
-.card-danger { border-color: var(--danger); }
-.card-danger .card-value { color: var(--danger); }
-.card-warn { border-color: var(--warn); }
-.card-warn .card-value { color: var(--warn); }
-.card-muted .card-value { color: var(--hold); }
-/* Selected = the list is currently filtered to this card. Ring via box-shadow so the layout doesn't shift. */
-.card.card-selected { background: var(--accent-bg); border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-.card-selected .card-label { color: var(--text); font-weight: 600; }
 
 /* ---------- gauges ---------- */
-.gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-bottom: 10px; }
-.card.gauge { flex-direction: row; align-items: center; gap: 10px; padding: 10px 14px 10px 8px; }
-.gauge-dial { flex: none; width: 136px; height: auto; display: block; }
+.gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+.card.gauge { flex-direction: row; align-items: center; gap: 14px; padding: 12px 16px 12px 10px; }
+.gauge-dial { flex: none; width: 190px; height: auto; display: block; }
+.gauge .card-label { font-size: 15px; font-weight: 600; color: var(--text); }
 .gauge-seg { stroke-width: 5; stroke-linecap: round; opacity: .2; }
 .gauge-seg.lit { opacity: 1; }
 .gauge-seg-ok { stroke: var(--gauge-ok); }
@@ -127,8 +123,8 @@ a.button:hover { border-color: var(--accent); }
 .gauge-value { fill: var(--text); font-size: 30px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .gauge-scale { fill: var(--muted); font-size: 16px; }
 .gauge-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.gauge-detail { font-size: 12px; color: var(--muted); }
-.gauge-band { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+.gauge-detail { font-size: 13px; color: var(--muted); }
+.gauge-band { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; }
 .gauge-icon { font-size: 11px; font-weight: 800; width: 12px; text-align: center; }
 .gauge-icon-ok { color: var(--gauge-ok); }
 .gauge-icon-watch { color: var(--gauge-watch); }
@@ -222,10 +218,13 @@ button.icon { border: none; font-size: 24px; line-height: 1; padding: 2px 8px; b
 .when { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
 .error { color: var(--danger); }
 
+@media (max-width: 1000px) {
+  .gauges { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 640px) {
   .app { padding: 16px; }
   .facts { grid-template-columns: 1fr; }
-  .gauges { grid-template-columns: repeat(2, 1fr); }
   .card.gauge { flex-direction: column; align-items: stretch; padding: 10px; }
   .gauge-dial { width: 100%; max-width: 170px; align-self: center; }
 }

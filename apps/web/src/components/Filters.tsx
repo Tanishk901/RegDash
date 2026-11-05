@@ -11,7 +11,7 @@ export function Filters({
   onChange: (next: Record<string, string | null>) => void;
 }) {
   const val = (k: string) => params.get(k) ?? "";
-  const active = [...params.keys()].some((k) => k !== "sort" && k !== "view");
+  const active = [...params.keys()].some((k) => k !== "sort");
   // Marks a control whose filter is applied, so it's obvious at a glance.
   const set = (k: string) => (val(k) ? "is-set" : undefined);
 
@@ -50,12 +50,27 @@ export function Filters({
           <option key={o} value={o}>{o}</option>
         ))}
       </select>
+      <select className={set("sla")} value={val("sla")} onChange={(e) => onChange({ sla: e.target.value || null })} aria-label="SLA">
+        <option value="">Any SLA</option>
+        <option value="BREACHED">SLA breached</option>
+        <option value="AT_RISK">SLA at risk</option>
+        <option value="OK">SLA OK</option>
+        <option value="PAUSED">SLA paused</option>
+      </select>
       <select value={val("sort") || "sla"} onChange={(e) => onChange({ sort: e.target.value === "sla" ? null : e.target.value })} aria-label="Sort">
         <option value="sla">Sort: needs attention</option>
         <option value="priority">Sort: priority</option>
         <option value="age">Sort: oldest first</option>
         <option value="updated">Sort: least recently updated</option>
       </select>
+      <label className={`check ${set("stale") ?? ""}`}>
+        <input
+          type="checkbox"
+          checked={val("stale") === "true"}
+          onChange={(e) => onChange({ stale: e.target.checked ? "true" : null })}
+        />
+        Stale only
+      </label>
       <label className={`check ${set("includeClosed") ?? ""}`}>
         <input
           type="checkbox"

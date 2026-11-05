@@ -5,7 +5,7 @@ import type { DashboardSummary, OwnerWorkload } from "./types";
 const owner = (name: string, count: number) => ({ owner: name, count }) as OwnerWorkload;
 
 const summary = (over: Partial<DashboardSummary>) =>
-  ({ totalOpen: 0, onHold: 0, slaBreached: 0, slaAtRisk: 0, stale: 0, byOwner: [], ...over }) as DashboardSummary;
+  ({ totalOpen: 0, onHold: 0, slaBreached: 0, slaAtRisk: 0, stale: 0, byOwner: [], byPriority: { P1: 0, P2: 0, P3: 0, P4: 0 }, ...over }) as DashboardSummary;
 
 const byKey = (s: DashboardSummary) => Object.fromEntries(gaugeMetrics(s).map((m) => [m.key, m]));
 
@@ -29,6 +29,11 @@ describe("gaugeMetrics", () => {
     expect(g.stale).toMatchObject({ total: 40, percent: 10 });
     expect(g.unassigned).toMatchObject({ count: 10, total: 40, percent: 25 });
     expect(g.onHold).toMatchObject({ count: 20, total: 40, percent: 50 });
+  });
+
+  it("counts P1 and P2 as high priority", () => {
+    const g = byKey(summary({ totalOpen: 10, byPriority: { P1: 1, P2: 2, P3: 3, P4: 4 } }));
+    expect(g.highPriority).toMatchObject({ count: 3, total: 10, percent: 30, band: "WATCH", filter: { priority: "P1,P2" } });
   });
 
   it("reports 0% unassigned when everyone has an owner", () => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { gaugeBand, gaugeMetrics, type DashboardSummary, type GaugeBand, type GaugeMetric } from "@regdash/shared";
-import { isSelected } from "./SummaryCards";
 
 const CX = 100;
 const CY = 88;
@@ -103,23 +103,16 @@ function Dial({ metric, value, needle }: { metric: GaugeMetric; value: number; n
   );
 }
 
-function Gauge({ metric, index, sweepKey, selected, onPick }: {
-  metric: GaugeMetric;
-  index: number;
-  sweepKey: unknown;
-  selected: boolean;
-  onPick: (filter: Record<string, string>) => void;
-}) {
+function Gauge({ metric, index, sweepKey }: { metric: GaugeMetric; index: number; sweepKey: unknown }) {
   const { value, needle } = useSweep(metric.percent ?? 0, sweepKey, index * STAGGER_MS);
   const band = metric.band && BAND_LABEL[metric.band];
   const detail = `${metric.count} of ${metric.total} ${metric.totalLabel}`;
 
   return (
-    <button
-      className={`card gauge ${selected ? "card-selected" : ""}`}
-      onClick={() => onPick(metric.filter)}
+    <Link
+      className="card gauge"
+      to={`/tickets?${new URLSearchParams(metric.filter)}`}
       title={`${metric.hint}. Watch from ${metric.watchAt}%, high from ${metric.highAt}%.`}
-      aria-pressed={selected}
       aria-label={
         metric.percent === null
           ? `${metric.label}: no tickets to measure`
@@ -137,7 +130,7 @@ function Gauge({ metric, index, sweepKey, selected, onPick }: {
           </span>
         )}
       </span>
-    </button>
+    </Link>
   );
 }
 
@@ -145,24 +138,13 @@ function Gauge({ metric, index, sweepKey, selected, onPick }: {
  * Speedometers for the share of open work that needs attention. The needles sweep up
  * from zero whenever the API has pulled new data, which covers the Refresh button, its
  * timed re-pull, an API restart and a file upload. A failed refresh doesn't sweep, so
- * movement never suggests data is fresher than it is.
+ * movement never suggests data is fresher than it is. They also sweep on arriving at the page.
  */
-export function Gauges({ summary, params, onPick }: {
-  summary: DashboardSummary;
-  params: URLSearchParams;
-  onPick: (filter: Record<string, string>) => void;
-}) {
+export function Gauges({ summary }: { summary: DashboardSummary }) {
   return (
     <section className="gauges" aria-label="Attention gauges">
       {gaugeMetrics(summary).map((m, i) => (
-        <Gauge
-          key={m.key}
-          metric={m}
-          index={i}
-          sweepKey={summary.lastRefreshedAt}
-          selected={isSelected(m.filter, params)}
-          onPick={onPick}
-        />
+        <Gauge key={m.key} metric={m} index={i} sweepKey={summary.lastRefreshedAt} />
       ))}
     </section>
   );

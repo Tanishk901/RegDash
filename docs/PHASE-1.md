@@ -27,7 +27,7 @@ The data refreshes automatically from the source. **No one maintains data in Reg
 
 ### In scope (Phase 1)
 - Read-only dashboard of open incidents (INC) and service requests (RITM / SR)
-- Summary tiles, a filterable and sortable ticket list, and a ticket detail panel
+- A landing page of gauges and tiles, a filterable and sortable ticket list, and a ticket detail panel
 - Three swappable data sources behind one interface: **mock**, **Excel**, **ServiceNow**
 - Auto-refresh, SLA state, staleness flag
 - Filtered views are shareable as URLs
@@ -58,13 +58,14 @@ IDs are referenced in tests and commits.
 ### Dashboard (FR-1.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-1.1 | Show summary tiles: total open, incidents, SRs, SLA breached, SLA at risk, on hold, P1+P2, stale | ✅ |
-| FR-1.2 | Clicking a tile filters the list to that set | ✅ |
+| FR-1.1 | The landing page shows gauges for breached, at risk, stale, unassigned, on hold and high priority, plus tiles for total open, incidents and SRs | ✅ |
+| FR-1.2 | Clicking a gauge or tile opens the Tickets page filtered to that set | ✅ |
 | FR-1.3 | Show when the data was last refreshed and which source it came from | ✅ |
 | FR-1.4 | Manual **Refresh** button forces a re-pull from the source | ✅ |
 | FR-1.5 | Show a clear banner if the last refresh failed, while still displaying the last good data | ✅ |
 | FR-1.6 | Show a warning listing any source rows that couldn't be read (never drop them silently) | ✅ |
-| FR-1.7 | Speedometer gauges show the share of open work breached, at risk, stale, unassigned and on hold. Needles sweep from zero whenever new data arrives (refresh, API restart, upload); clicking one filters the list | ✅ |
+| FR-1.7 | Gauge needles sweep from zero on arriving at the page and whenever new data arrives (refresh, API restart, upload) | ✅ |
+| FR-1.8 | Single-page app with its own URLs: `/` dashboard, `/tickets` ticket table, `/workload` team workload. Older `/?type=SR`-style links still work | ✅ |
 
 ### Ticket list (FR-2.x)
 | ID | Requirement | Status |
@@ -171,7 +172,7 @@ If the source provides a due date, RegDash uses it. Otherwise it applies **place
 
 ```
             ┌─────────────── apps/web (React + Vite) ───────────────┐
-            │  Summary tiles · Filters · Ticket table · Detail panel │
+            │  Gauges · Ticket table · Workload · Detail panel       │
             └───────────────────────────┬───────────────────────────┘
                                         │  /api/*  (JSON, polled every 60s)
             ┌───────────────────────────▼───────────────────────────┐

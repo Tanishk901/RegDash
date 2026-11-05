@@ -15,6 +15,7 @@ export const GAUGE_LIMITS = {
   stale: { watchAt: 10, highAt: 25 },
   unassigned: { watchAt: 10, highAt: 25 },
   onHold: { watchAt: 25, highAt: 50 },
+  highPriority: { watchAt: 25, highAt: 50 },
 } as const;
 
 export interface GaugeMetric {
@@ -66,5 +67,6 @@ export function gaugeMetrics(summary: DashboardSummary): GaugeMetric[] {
     metric("stale", "Stale", summary.stale, summary.totalOpen, "open", { stale: "true", sort: "updated" }, "No update in 48 hours, out of all open tickets"),
     metric("unassigned", "Unassigned", unassigned, summary.totalOpen, "open", { assignedTo: "__unassigned" }, "Nobody has picked these up, out of all open tickets"),
     metric("onHold", "On hold", summary.onHold, summary.totalOpen, "open", { status: "ON_HOLD" }, "Waiting on someone outside the team, out of all open tickets"),
+    metric("highPriority", "High priority", summary.byPriority.P1 + summary.byPriority.P2, summary.totalOpen, "open", { priority: "P1,P2" }, "P1 and P2, out of all open tickets"),
   ];
 }

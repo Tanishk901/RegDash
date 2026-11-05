@@ -1,5 +1,17 @@
-import { useCallback, useState } from "react";
-import { Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Navigate,
+  NavLink,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import type { DashboardSummary } from "@regdash/shared";
 import { ExcelUpload } from "./components/ExcelUpload";
 import { Filters } from "./components/Filters";
 import { Gauges } from "./components/Gauges";
@@ -7,38 +19,38 @@ import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
 import { TicketTable } from "./components/TicketTable";
 import { Workload } from "./components/Workload";
-import { api, usePolling } from "./lib/api";
+import { api, usePolling, type Health } from "./lib/api";
 
 const REFRESH_MS = 60_000;
 
-function Dashboard() {
-  const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { number } = useParams();
+/** What the pages get from the shell, which owns the polling so it carries on across navigation. */
+interface Shared {
+  summary: DashboardSummary | null;
+  health: Health | null;
+  apiError: string | null;
+}
+
+const useShared = () => useOutletContext<Shared>();
+
+const tabClass = ({ isActive }: { isActive: boolean }) => (isActive ? "tab active" : "tab");
+
+/** The header, navigation and banners shown on every page. */
+function Shell() {
+  const { pathname } = useLocation();
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
-  const paramKey = params.toString();
   const summary = usePolling(() => api.summary(), [], REFRESH_MS);
-  const list = usePolling(() => api.tickets(new URLSearchParams(paramKey)), [paramKey], REFRESH_MS);
   const health = usePolling(() => api.health(), [], REFRESH_MS);
 
-  // Filters live in the URL so a filtered view can be shared as a link.
-  const update = useCallback(
-    (next: Record<string, string | null>) => {
-      const p = new URLSearchParams(params);
-      for (const [k, v] of Object.entries(next)) v === null ? p.delete(k) : p.set(k, v);
-      setParams(p, { replace: true });
-    },
-    [params, setParams],
-  );
+  // Start each page at the top. Opening a ticket stays in the same section, so the list keeps its place.
+  const section = pathname.split("/")[1];
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [section]);
 
-  const open = (n: string) => navigate({ pathname: `/tickets/${n}`, search: location.search });
-  const close = useCallback(() => navigate({ pathname: "/", search: location.search }), [navigate, location.search]);
-
-  const reloadAll = () => Promise.all([summary.reload(), list.reload(), health.reload()]);
+  const reloadAll = () => Promise.all([summary.reload(), health.reload()]);
 
   const forceRefresh = async () => {
     setRefreshing(true);
@@ -75,12 +87,9 @@ function Dashboard() {
       return `Upload removed. Back to the ${r.source} source.`;
     });
 
-  const pickCard = (f: Record<string, string>) =>
-    update({ view: null, type: null, status: null, priority: null, sla: null, assignedTo: null, stale: null, sort: null, ...f });
-
   const h = health.data;
   const last = summary.data?.lastRefreshedAt;
-  const view = params.get("view") === "workload" ? "workload" : "tickets";
+  const shared: Shared = { summary: summary.data, health: h, apiError: summary.error };
 
   return (
     <div className="app">
@@ -117,6 +126,12 @@ function Dashboard() {
         </div>
       </header>
 
+      <nav className="tabs" aria-label="Pages">
+        <NavLink className={tabClass} to="/" end>Dashboard</NavLink>
+        <NavLink className={tabClass} to="/tickets">Tickets</NavLink>
+        <NavLink className={tabClass} to="/workload">Team workload</NavLink>
+      </nav>
+
       {notice && (
         <div className={`banner banner-notice ${notice.kind === "ok" ? "banner-ok" : "banner-error"}`} role={notice.kind === "ok" ? "status" : "alert"}>
           <span>{notice.text}</span>
@@ -138,61 +153,106 @@ function Dashboard() {
           </ul>
         </details>
       )}
-      {(summary.error || list.error) && !h?.lastError && (
+      {summary.error && !h?.lastError && (
         <div className="banner banner-error" role="alert">
-          Can't reach the RegDash API ({summary.error ?? list.error}). Is <code>pnpm dev:api</code> running?
+          Can't reach the RegDash API ({summary.error}). Is <code>pnpm dev:api</code> running?
         </div>
       )}
 
-      {summary.data && (
-        <>
-          <Gauges summary={summary.data} params={params} onPick={pickCard} />
-          <SummaryCards summary={summary.data} params={params} onPick={pickCard} />
-        </>
-      )}
-
-      <nav className="tabs" aria-label="View">
-        <button className={view === "tickets" ? "tab active" : "tab"} aria-pressed={view === "tickets"} onClick={() => update({ view: null })}>
-          Tickets
-        </button>
-        <button className={view === "workload" ? "tab active" : "tab"} aria-pressed={view === "workload"} onClick={() => update({ view: "workload" })}>
-          Team workload
-        </button>
-      </nav>
-
-      {view === "workload" ? (
-        summary.data && (
-          <Workload rows={summary.data.byOwner} onPick={(owner) => update({ view: null, assignedTo: owner })} />
-        )
-      ) : (
-        <>
-          <Filters params={params} owners={list.data?.owners ?? []} onChange={update} />
-
-          <div className="count muted">
-            <span>
-              {list.data ? `${list.data.total} ticket${list.data.total === 1 ? "" : "s"}` : list.loading ? "Loading…" : ""}
-            </span>
-            {!!list.data?.total && (
-              <a className="button" href={api.ticketsCsvUrl(params)} download>
-                Export CSV
-              </a>
-            )}
-          </div>
-
-          {list.data && <TicketTable items={list.data.items} selected={number} onOpen={open} />}
-        </>
-      )}
-
-      {number && <TicketDetail number={number} servicenowUrl={h?.servicenowUrl ?? null} onClose={close} />}
+      <Outlet context={shared} />
     </div>
+  );
+}
+
+function DashboardPage() {
+  const { summary } = useShared();
+  const [params] = useSearchParams();
+
+  // Links saved before the pages were split carried the view and filters on "/".
+  if (params.get("view") === "workload") return <Navigate to="/workload" replace />;
+  if (params.size > 0) return <Navigate to={`/tickets?${params}`} replace />;
+
+  if (!summary) return null;
+  return (
+    <>
+      <Gauges summary={summary} />
+      <SummaryCards summary={summary} />
+    </>
+  );
+}
+
+function TicketsPage() {
+  const { summary, health, apiError } = useShared();
+  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { number } = useParams();
+
+  const paramKey = params.toString();
+  // Also reloads as soon as the API has new data, so the list never lags the header.
+  const list = usePolling(() => api.tickets(new URLSearchParams(paramKey)), [paramKey, summary?.lastRefreshedAt], REFRESH_MS);
+
+  // Filters live in the URL so a filtered view can be shared as a link.
+  const update = useCallback(
+    (next: Record<string, string | null>) => {
+      const p = new URLSearchParams(params);
+      for (const [k, v] of Object.entries(next)) v === null ? p.delete(k) : p.set(k, v);
+      setParams(p, { replace: true });
+    },
+    [params, setParams],
+  );
+
+  const open = (n: string) => navigate({ pathname: `/tickets/${n}`, search: location.search });
+  const close = useCallback(() => navigate({ pathname: "/tickets", search: location.search }), [navigate, location.search]);
+
+  return (
+    <>
+      <Filters params={params} owners={list.data?.owners ?? []} onChange={update} />
+
+      {list.error && !apiError && (
+        <div className="banner banner-error" role="alert">Couldn't load tickets: {list.error}</div>
+      )}
+
+      <div className="count muted">
+        <span>
+          {list.data ? `${list.data.total} ticket${list.data.total === 1 ? "" : "s"}` : list.loading ? "Loading…" : ""}
+        </span>
+        {!!list.data?.total && (
+          <a className="button" href={api.ticketsCsvUrl(params)} download>
+            Export CSV
+          </a>
+        )}
+      </div>
+
+      {list.data && <TicketTable items={list.data.items} selected={number} onOpen={open} />}
+
+      {number && <TicketDetail number={number} servicenowUrl={health?.servicenowUrl ?? null} onClose={close} />}
+    </>
+  );
+}
+
+function WorkloadPage() {
+  const { summary } = useShared();
+  const navigate = useNavigate();
+
+  if (!summary) return null;
+  return (
+    <Workload
+      rows={summary.byOwner}
+      onPick={(owner) => navigate(`/tickets?${new URLSearchParams({ assignedTo: owner })}`)}
+    />
   );
 }
 
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/tickets/:number" element={<Dashboard />} />
+      <Route element={<Shell />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="tickets/:number?" element={<TicketsPage />} />
+        <Route path="workload" element={<WorkloadPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
     </Routes>
   );
 }
