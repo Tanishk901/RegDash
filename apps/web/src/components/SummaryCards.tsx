@@ -13,7 +13,7 @@ interface Card {
 const CARD_FILTER_KEYS = ["type", "status", "priority", "sla", "assignedTo", "stale"] as const;
 
 /** A card is selected when the URL's card-filter params are exactly its filter. */
-function isSelected(filter: Record<string, string>, params: URLSearchParams): boolean {
+export function isSelected(filter: Record<string, string>, params: URLSearchParams): boolean {
   return CARD_FILTER_KEYS.every((k) => (params.get(k) ?? "") === (filter[k] ?? ""));
 }
 

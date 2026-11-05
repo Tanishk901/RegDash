@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ExcelUpload } from "./components/ExcelUpload";
 import { Filters } from "./components/Filters";
+import { Gauges } from "./components/Gauges";
 import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
 import { TicketTable } from "./components/TicketTable";
@@ -74,6 +75,9 @@ function Dashboard() {
       return `Upload removed. Back to the ${r.source} source.`;
     });
 
+  const pickCard = (f: Record<string, string>) =>
+    update({ view: null, type: null, status: null, priority: null, sla: null, assignedTo: null, stale: null, sort: null, ...f });
+
   const h = health.data;
   const last = summary.data?.lastRefreshedAt;
   const view = params.get("view") === "workload" ? "workload" : "tickets";
@@ -141,13 +145,10 @@ function Dashboard() {
       )}
 
       {summary.data && (
-        <SummaryCards
-          summary={summary.data}
-          params={params}
-          onPick={(f) =>
-            update({ view: null, type: null, status: null, priority: null, sla: null, assignedTo: null, stale: null, sort: null, ...f })
-          }
-        />
+        <>
+          <Gauges summary={summary.data} params={params} onPick={pickCard} />
+          <SummaryCards summary={summary.data} params={params} onPick={pickCard} />
+        </>
       )}
 
       <nav className="tabs" aria-label="View">

@@ -64,6 +64,7 @@ IDs are referenced in tests and commits.
 | FR-1.4 | Manual **Refresh** button forces a re-pull from the source | ✅ |
 | FR-1.5 | Show a clear banner if the last refresh failed, while still displaying the last good data | ✅ |
 | FR-1.6 | Show a warning listing any source rows that couldn't be read (never drop them silently) | ✅ |
+| FR-1.7 | Speedometer gauges show the share of open work breached, at risk, stale, unassigned and on hold. Needles sweep from zero whenever new data arrives (refresh, API restart, upload); clicking one filters the list | ✅ |
 
 ### Ticket list (FR-2.x)
 | ID | Requirement | Status |

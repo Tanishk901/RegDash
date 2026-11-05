@@ -3,6 +3,7 @@ import {
   PRIORITIES,
   STATUSES,
   toView,
+  UNASSIGNED,
   type DashboardSummary,
   type OwnerWorkload,
   type Priority,
@@ -13,9 +14,6 @@ import {
   type TicketStatus,
   type TicketView,
 } from "@regdash/shared";
-
-/** Owner name used for tickets nobody has picked up. */
-const UNASSIGNED = "Unassigned";
 
 const PRIORITY_RANK: Record<Priority, number> = { P1: 0, P2: 1, P3: 2, P4: 3 };
 // Paused tickets are waiting on others, so they sort after everything the team can act on.
