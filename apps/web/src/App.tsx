@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ExcelUpload } from "./components/ExcelUpload";
 import { Filters } from "./components/Filters";
 import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
@@ -15,6 +16,8 @@ function Dashboard() {
   const location = useLocation();
   const { number } = useParams();
   const [refreshing, setRefreshing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   const paramKey = params.toString();
   const summary = usePolling(() => api.summary(), [], REFRESH_MS);
@@ -34,12 +37,42 @@ function Dashboard() {
   const open = (n: string) => navigate({ pathname: `/tickets/${n}`, search: location.search });
   const close = useCallback(() => navigate({ pathname: "/", search: location.search }), [navigate, location.search]);
 
+  const reloadAll = () => Promise.all([summary.reload(), list.reload(), health.reload()]);
+
   const forceRefresh = async () => {
     setRefreshing(true);
     await api.refresh().catch(() => undefined);
-    await Promise.all([summary.reload(), list.reload(), health.reload()]);
+    await reloadAll();
     setRefreshing(false);
   };
+
+  /** Runs an upload change, reloads the dashboard and reports the outcome in the notice banner. */
+  const changeUpload = async (run: () => Promise<string>) => {
+    setUploading(true);
+    setNotice(null);
+    try {
+      const text = await run();
+      await reloadAll();
+      setNotice({ kind: "ok", text });
+    } catch (e) {
+      setNotice({ kind: "error", text: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const uploadFile = (file: File) =>
+    changeUpload(async () => {
+      const r = await api.upload(file);
+      const rejected = r.rejected ? ` ${r.rejected} row(s) couldn't be read, see the warning below.` : "";
+      return `Loaded ${r.tickets} ticket${r.tickets === 1 ? "" : "s"} from ${r.fileName}.${rejected}`;
+    });
+
+  const removeUpload = () =>
+    changeUpload(async () => {
+      const r = await api.removeUpload();
+      return `Upload removed. Back to the ${r.source} source.`;
+    });
 
   const h = health.data;
   const last = summary.data?.lastRefreshedAt;
@@ -56,16 +89,36 @@ function Dashboard() {
           </div>
         </div>
         <div className="meta">
-          {h && <span className={`source source-${h.source}`}>Source: {h.source}</span>}
+          {h && !h.upload && <span className={`source source-${h.source}`}>Source: {h.source}</span>}
+          {h?.upload && (
+            <span className="source source-upload" title={h.upload.fileName}>Source: {h.upload.fileName}</span>
+          )}
           <span className="muted">
-            {last ? `Data as of ${new Date(last).toLocaleTimeString()}` : "No data yet"}
+            {/* An uploaded file doesn't change, so re-reading it doesn't make the data any newer. */}
+            {h?.upload
+              ? `Uploaded ${new Date(h.upload.uploadedAt).toLocaleString()}`
+              : last
+                ? `Data as of ${new Date(last).toLocaleTimeString()}`
+                : "No data yet"}
           </span>
+          {h?.upload && (
+            <button className="link" onClick={removeUpload} disabled={uploading}>
+              Remove upload
+            </button>
+          )}
+          <ExcelUpload busy={uploading} onPick={uploadFile} />
           <button onClick={forceRefresh} disabled={refreshing}>
             {refreshing ? "Refreshing…" : "Refresh"}
           </button>
         </div>
       </header>
 
+      {notice && (
+        <div className={`banner banner-notice ${notice.kind === "ok" ? "banner-ok" : "banner-error"}`} role={notice.kind === "ok" ? "status" : "alert"}>
+          <span>{notice.text}</span>
+          <button className="link" onClick={() => setNotice(null)}>Dismiss</button>
+        </div>
+      )}
       {h?.lastError && (
         <div className="banner banner-error" role="alert">
           Last refresh from <b>{h.source}</b> failed: {h.lastError}. Showing the last good data.

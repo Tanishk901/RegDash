@@ -43,11 +43,20 @@ Then set `DATA_SOURCE` in `apps/api/.env`:
 | `excel` | `EXCEL_PATH` (.xlsx) | the team tracker, a local or OneDrive-synced copy of the SharePoint file |
 | `servicenow` | ServiceNow Table API | live data (needs a read-only service account) |
 
+### Uploading a tracker from the dashboard
+
+Click **Upload Excel** in the top bar and pick an `.xlsx` file (25 MB max). No `.env` change or restart is needed. The file becomes the live source, replacing whichever one is configured, until you click **Remove upload**.
+
+- A copy is kept at `EXCEL_UPLOAD_PATH` (default `data/uploaded-tracker.xlsx`, git-ignored) so it survives an API restart. The file at `EXCEL_PATH` is never changed.
+- A file that can't be read, or has no usable tickets, is refused with the reason, and the current data stays.
+- The dashboard shows what was uploaded and when. It doesn't update until someone uploads a newer file.
+- The upload applies to everyone viewing this API, and the API has no login, so keep it on the work machine or internal network.
+
 To try the Excel source with fake data, run `pnpm sample:excel`, which regenerates `data/sample-tickets.xlsx`, then set `DATA_SOURCE=excel`.
 
 For the **real tracker**, copy the file and check its headers against the alias table in `docs/PHASE-1.md` §7. Most common header names already work. Any rows RegDash can't read appear in a yellow banner with the reason.
 
-> ⚠️ Only point `excel` or `servicenow` at real data on your work machine, inside the company network. Never copy real ticket data to a personal device.
+> ⚠️ Only upload real data, or point `excel` or `servicenow` at it, on your work machine, inside the company network. Never copy real ticket data to a personal device.
 
 ## Scripts
 
@@ -63,7 +72,7 @@ For the **real tracker**, copy the file and check its headers against the alias 
 
 ## API
 
-`GET /api/health` · `POST /api/refresh` · `GET /api/summary` · `GET /api/tickets?type=&status=&priority=&sla=&stale=&assignedTo=&q=&includeClosed=&sort=&dir=` · `GET /api/tickets.csv?…same filters` · `GET /api/tickets/:number`
+`GET /api/health` · `POST /api/refresh` · `GET /api/summary` · `GET /api/tickets?type=&status=&priority=&sla=&stale=&assignedTo=&q=&includeClosed=&sort=&dir=` · `GET /api/tickets.csv?…same filters` · `GET /api/tickets/:number` · `POST /api/upload?fileName=` (raw `.xlsx` body) · `DELETE /api/upload`
 
 ## Before showing it to anyone
 

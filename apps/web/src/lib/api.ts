@@ -16,6 +16,22 @@ export interface Health {
   rejectedRows: { row: string; reason: string }[];
   /** Set when SERVICENOW_BASE_URL is configured; enables "Open in ServiceNow" links. */
   servicenowUrl: string | null;
+  /** Set while a workbook uploaded from the dashboard is the live source. */
+  upload: { fileName: string; uploadedAt: string } | null;
+}
+
+export interface UploadResult {
+  fileName: string;
+  uploadedAt: string;
+  tickets: number;
+  rejected: number;
+  lastError: string | null;
+}
+
+export interface RemoveUploadResult {
+  source: string;
+  tickets: number;
+  lastError: string | null;
 }
 
 const SN_TABLE_BY_PREFIX: [prefix: string, table: string][] = [
@@ -42,6 +58,14 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** For writes whose error message is meant to be shown to the user as-is. */
+async function send<T>(path: string, init: RequestInit): Promise<T> {
+  const res = await fetch(path, init);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(typeof body.error === "string" ? body.error : `HTTP ${res.status}`);
+  return body as T;
+}
+
 export const api = {
   summary: () => get<DashboardSummary>("/api/summary"),
   tickets: (params: URLSearchParams) => get<TicketList>(`/api/tickets?${params}`),
@@ -50,6 +74,13 @@ export const api = {
   ticket: (number: string) => get<TicketView>(`/api/tickets/${encodeURIComponent(number)}`),
   health: () => get<Health>("/api/health"),
   refresh: () => fetch("/api/refresh", { method: "POST" }),
+  upload: (file: File) =>
+    send<UploadResult>(`/api/upload?fileName=${encodeURIComponent(file.name)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+      body: file,
+    }),
+  removeUpload: () => send<RemoveUploadResult>("/api/upload", { method: "DELETE" }),
 };
 
 /** Fetch + poll. Keeps showing the previous data while a reload is in flight. */

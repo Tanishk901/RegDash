@@ -14,7 +14,7 @@ export class TicketStore {
   private timer: NodeJS.Timeout | null = null;
   private inFlight: Promise<void> | null = null;
 
-  constructor(readonly source: TicketSource) {}
+  constructor(public source: TicketSource) {}
 
   all(): Ticket[] {
     return this.tickets;
@@ -49,6 +49,18 @@ export class TicketStore {
       }
     })();
     return this.inFlight;
+  }
+
+  /** Resolves once no refresh is running. */
+  async idle(): Promise<void> {
+    while (this.inFlight) await this.inFlight;
+  }
+
+  /** Switches source and pulls from it. Waits out any running refresh so old data can't land after the new. */
+  async useSource(source: TicketSource): Promise<void> {
+    await this.idle();
+    this.source = source;
+    await this.refresh();
   }
 
   startAutoRefresh(seconds: number) {

@@ -97,6 +97,7 @@ IDs are referenced in tests and commits.
 | FR-4.6 | Excel: rows missing a number, status or created date, or with a duplicate number, are rejected with a reason | ✅ |
 | FR-4.7 | ServiceNow: read active `incident` and `sc_req_item` for the team's assignment group via the Table API, with paging | 🟡 written and unit-tested with a fake server; not yet run against a live instance |
 | FR-4.8 | Excel: read the file directly from SharePoint via Microsoft Graph instead of a local or synced copy | ⏳ Phase 1.1 |
+| FR-4.9 | Excel: upload a tracker `.xlsx` from the dashboard. It's validated first, replaces the configured source until removed, and survives an API restart | ✅ |
 
 ---
 

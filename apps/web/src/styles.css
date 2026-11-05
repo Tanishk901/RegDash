@@ -58,6 +58,7 @@ h1 { margin: 0; font-size: 22px; }
 .meta { display: flex; gap: 12px; align-items: center; font-size: 13px; flex-wrap: wrap; }
 .source { padding: 3px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
 .source-mock { color: var(--warn); }
+.source-upload { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 button {
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   padding: 6px 12px; cursor: pointer;
@@ -81,6 +82,9 @@ a.button:hover { border-color: var(--accent); }
 .banner { padding: 10px 14px; border-radius: var(--radius); margin-bottom: 12px; font-size: 14px; }
 .banner-error { background: var(--danger-bg); color: var(--danger); }
 .banner-warn { background: var(--warn-bg); color: var(--warn); }
+.banner-ok { background: var(--ok-bg); color: var(--ok); }
+.banner-notice { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.banner-notice button.link { color: inherit; flex: none; text-decoration: underline; }
 .banner ul { margin: 8px 0 0; padding-left: 18px; }
 
 /* ---------- summary cards ---------- */
