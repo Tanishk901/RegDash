@@ -100,6 +100,7 @@ IDs are referenced in tests and commits.
 | FR-4.7 | ServiceNow: read active `incident` and `sc_req_item` for the team's assignment group via the Table API, with paging | 🟡 written and unit-tested with a fake server; not yet run against a live instance |
 | FR-4.8 | Excel: read the file directly from SharePoint via Microsoft Graph instead of a local or synced copy | ⏳ Phase 1.1 |
 | FR-4.9 | Excel: upload a tracker `.xlsx` from the dashboard. It's validated first, replaces the configured source until removed, and survives an API restart | ✅ |
+| FR-4.10 | Excel: find the table, ticket number and incident/SR type by rule, and show how the file was read (§7) | 🟡 tested on made-up layouts; not yet checked against the real tracker |
 
 ---
 
@@ -125,8 +126,8 @@ The one shape the UI sees is `Ticket` in `packages/shared/src/types.ts`. The API
 
 | RegDash field | Excel column (any of these headers) | ServiceNow field |
 |---|---|---|
-| `number` | Number, Ticket, Ticket No, ID | `number` |
-| `type` | Type (else inferred from INC/RITM prefix) | table: `incident` → INCIDENT, `sc_req_item` → SR |
+| `number` | Number, Ticket, Ticket No, Incident ID, ID (else any column full of ticket numbers) | `number` |
+| `type` | Type, Ticket Type, INC/SR (else any column of Incident/SR labels, then the number prefix, then the sheet name) | table: `incident` → INCIDENT, `sc_req_item` → SR |
 | `shortDescription` | Short Description, Summary, Title | `short_description` |
 | `status` | Status, State | `state` (display value) |
 | `priority` | Priority, Severity | `priority` (display value, e.g. "2 - High") |
@@ -147,6 +148,27 @@ The one shape the UI sees is `Ticket` in `packages/shared/src/types.ts`. The API
 A trailing unit note in a header is ignored, so "Avg Time (hrs)" matches "Avg Time". The `taskHours` / `itemCount` aliases are guesses and must be checked against the real tracker.
 
 Derived at read time: `pendingHours` (time since `pendingSince`, on-hold tickets only) and `estimatedHours` = `taskHours × itemCount` (only when both are recorded).
+
+### How the Excel source tells incidents from SRs
+
+These are rule-based assumptions, built without seeing the real tracker. The dashboard's **How this file was read** panel shows what each one decided, so they can be checked against the real file.
+
+**Finding the table**
+- Uses the `EXCEL_SHEET` sheet if the workbook has one. Otherwise reads every visible sheet that holds tickets, skipping any named like an archive, backup or copy.
+- Headers can be anywhere in the first 10 rows, so a title above the table is fine.
+- Column names ignore case and punctuation: `Ticket_No.` and `Ticket #` both match.
+
+**Finding the ticket number**
+- A named column whose values look like ticket numbers comes first. If several qualify (e.g. separate `INC No` and `SR No` columns), each row uses whichever is filled.
+- Next, any column that's mostly ticket numbers, whatever it's called.
+- `Sr No`, `S.No` and other row counters holding plain 1, 2, 3 are not treated as ticket numbers, because `Sr No` usually means serial number.
+
+**Deciding the type, in this order**
+1. A type label: `Incident`, `INC`, `Outage` → incident. `Service Request`, `SR`, `Request`, `RITM`, `SCTASK`, `Task` → SR. Whole words only, so `Include` and `Srinivas` don't count.
+2. The number prefix followed by digits: `INC…` → incident. `RITM…`, `REQ…`, `SCTASK…`, `SR…` → SR.
+3. A sheet named for one kind, such as `Incidents` or `Service Requests`.
+
+If the label and prefix disagree, the label wins and the ticket is listed as a conflict. If nothing answers, the row is rejected with a reason rather than guessed from its description.
 
 ### Status vocabulary
 `NEW` · `IN_PROGRESS` · `ON_HOLD` (waiting on someone outside the team) · `RESOLVED` · `CLOSED`

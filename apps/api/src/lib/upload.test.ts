@@ -58,6 +58,7 @@ describe("uploading a tracker", () => {
     const health = (await request(app).get("/api/health")).body;
     expect(health).toMatchObject({ source: "excel", tickets: 2, upload: { fileName: "Tracker.xlsx" } });
     expect(health.rejectedRows).toEqual([{ row: "row 4", reason: 'unknown status "Banana"' }]);
+    expect(health.reading.typedBy).toEqual({ column: 0, number: 2, sheet: 0 });
     expect((await request(app).get("/api/tickets/INC0000101")).status).toBe(200);
   });
 
@@ -103,6 +104,7 @@ describe("uploading a tracker", () => {
     const res = await request(app).delete("/api/upload");
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ source: "mock", tickets: mockCount });
+    expect((await request(app).get("/api/health")).body.reading).toBeNull();
     expect(upload.current()).toBeNull();
     expect(existsSync(filePath)).toBe(false);
     expect(existsSync(`${filePath}.json`)).toBe(false);

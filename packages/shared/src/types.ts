@@ -61,6 +61,24 @@ export interface Ticket {
   source: "mock" | "excel" | "servicenow";
 }
 
+/** How a spreadsheet was understood, so the assumptions can be checked rather than trusted. */
+export interface SourceReading {
+  sheets: {
+    name: string;
+    headerRow: number;
+    tickets: number;
+    /** The columns that decide what a ticket is. `how` says whether the name or the contents gave it away. */
+    columns: { field: "number" | "type" | "status" | "createdAt"; header: string; how: "name" | "contents" }[];
+    /** Column names that weren't recognised and so aren't used. */
+    ignoredHeaders: string[];
+  }[];
+  skippedSheets: { name: string; reason: string }[];
+  /** How many tickets got their type from each rule, in the order the rules are tried. */
+  typedBy: { column: number; number: number; sheet: number };
+  /** Tickets whose type column and number prefix disagree. The type column wins. */
+  typeConflicts: { number: string; column: TicketType; prefix: TicketType }[];
+}
+
 /** Ticket plus fields the API derives at read time. */
 export interface TicketView extends Ticket {
   ageHours: number;

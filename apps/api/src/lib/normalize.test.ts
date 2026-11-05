@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractTagged,
-  inferType,
+  classifyType,
   normalizeCount,
   normalizeDate,
   normalizeDuration,
@@ -69,11 +69,53 @@ describe("normalizePriority", () => {
   ])("%s → %s", (raw, expected) => expect(normalizePriority(raw)).toBe(expected));
 });
 
-describe("inferType", () => {
-  it("uses explicit type column", () => expect(inferType("X1", "Service Request")).toBe("SR"));
-  it("falls back to number prefix", () => {
-    expect(inferType("INC0012345")).toBe("INCIDENT");
-    expect(inferType("RITM0004567")).toBe("SR");
+describe("classifyType", () => {
+  const type = (number: unknown, column?: unknown, sheet?: "INCIDENT" | "SR") => classifyType(number, column, sheet).type;
+
+  it.each([
+    ["Incident", "INCIDENT"],
+    ["INC", "INCIDENT"],
+    ["incidents", "INCIDENT"],
+    ["Service Request", "SR"],
+    ["service_request", "SR"],
+    ["Service Req", "SR"],
+    ["SR", "SR"],
+    ["SRs", "SR"],
+    ["Request", "SR"],
+    ["RITM", "SR"],
+    ["SCTask", "SR"],
+  ])("reads the type label %s", (label, expected) => expect(type("X1", label)).toBe(expected));
+
+  it.each(["Include", "Srinivas", "Requested", "Access", "Incident or request", "", null])(
+    "doesn't read a type from %s",
+    (label) => expect(type("X1", label)).toBeNull(),
+  );
+
+  it.each([
+    ["INC0012345", "INCIDENT"],
+    ["inc-104", "INCIDENT"],
+    ["Incident 7", "INCIDENT"],
+    ["RITM0004567", "SR"],
+    ["REQ12", "SR"],
+    ["SCTASK0001", "SR"],
+    ["SR-104", "SR"],
+    ["SR 104", "SR"],
+  ])("reads the number prefix of %s", (number, expected) => expect(type(number)).toBe(expected));
+
+  it.each(["INCLUDE", "SRINIVAS", "12345", "TASK9"])("doesn't read a type from the number %s", (number) =>
+    expect(type(number)).toBeNull(),
+  );
+
+  it("tries the column, then the number, then the sheet", () => {
+    expect(classifyType("INC1", "Service Request", "INCIDENT")).toEqual({ type: "SR", by: "column", conflict: true });
+    expect(classifyType("INC1", "Access", "SR")).toEqual({ type: "INCIDENT", by: "number", conflict: false });
+    expect(classifyType("104", "Access", "SR")).toEqual({ type: "SR", by: "sheet", conflict: false });
+    expect(classifyType("104", "Access")).toEqual({ type: null, by: null, conflict: false });
+  });
+
+  it("only calls it a conflict when both sides give an answer", () => {
+    expect(classifyType("INC1", "Incident").conflict).toBe(false);
+    expect(classifyType("104", "Incident").conflict).toBe(false);
   });
 });
 

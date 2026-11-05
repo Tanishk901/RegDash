@@ -15,6 +15,7 @@ import type { DashboardSummary } from "@regdash/shared";
 import { ExcelUpload } from "./components/ExcelUpload";
 import { Filters } from "./components/Filters";
 import { Gauges } from "./components/Gauges";
+import { SourceReadingPanel } from "./components/SourceReadingPanel";
 import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
 import { TicketTable } from "./components/TicketTable";
@@ -153,6 +154,7 @@ function Shell() {
           </ul>
         </details>
       )}
+      {h?.reading && <SourceReadingPanel reading={h.reading} />}
       {summary.error && !h?.lastError && (
         <div className="banner banner-error" role="alert">
           Can't reach the RegDash API ({summary.error}). Is <code>pnpm dev:api</code> running?

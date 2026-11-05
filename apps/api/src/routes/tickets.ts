@@ -57,6 +57,7 @@ export function ticketRoutes(store: TicketStore, { now = () => new Date(), servi
       lastRefreshedAt: store.lastRefreshedAt,
       lastError: store.lastError,
       rejectedRows: store.rejectedRows(),
+      reading: store.reading(),
       servicenowUrl: servicenowUrl ?? null,
       upload: upload?.current() ?? null,
     });

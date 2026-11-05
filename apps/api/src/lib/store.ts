@@ -9,6 +9,7 @@ import type { SourceResult, TicketSource } from "../sources/TicketSource";
 export class TicketStore {
   private tickets: Ticket[] = [];
   private rejected: SourceResult["rejected"] = [];
+  private lastReading: SourceResult["reading"] = undefined;
   lastRefreshedAt: string | null = null;
   lastError: string | null = null;
   private timer: NodeJS.Timeout | null = null;
@@ -29,6 +30,10 @@ export class TicketStore {
     return this.rejected;
   }
 
+  reading() {
+    return this.lastReading ?? null;
+  }
+
   refresh(): Promise<void> {
     // Collapse concurrent refreshes into one call to the source.
     this.inFlight ??= (async () => {
@@ -36,6 +41,7 @@ export class TicketStore {
         const res = await this.source.fetchTickets();
         this.tickets = res.tickets;
         this.rejected = res.rejected;
+        this.lastReading = res.reading;
         this.lastRefreshedAt = new Date().toISOString();
         this.lastError = null;
         if (res.rejected.length) {

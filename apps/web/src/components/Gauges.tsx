@@ -96,7 +96,8 @@ function Dial({ metric, value, needle }: { metric: GaugeMetric; value: number; n
         <polygon points={`${CX - 3},${CY} ${CX + 3},${CY} ${CX},${CY - 54}`} />
       </g>
       <circle className="gauge-hub" cx={CX} cy={CY} r={7} />
-      <text x={CX} y={CY + 42} className="gauge-value" textAnchor="middle">
+      {/* Low enough to clear the needle's tip at both ends of the dial. */}
+      <text x={CX} y={CY + 50} className="gauge-value" textAnchor="middle">
         {hasData ? `${Math.round(value)}%` : "—"}
       </text>
     </svg>

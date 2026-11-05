@@ -37,16 +37,47 @@ export function normalizePriority(raw: unknown): Priority | null {
   return null;
 }
 
-export function inferType(number: string, raw?: unknown): TicketType | null {
-  if (raw != null && String(raw).trim()) {
-    const s = clean(String(raw));
-    if (/^(inc|incident)/.test(s)) return "INCIDENT";
-    if (/^(sr|service request|request|req|ritm|sctask|task)/.test(s)) return "SR";
-  }
-  const n = number.trim().toUpperCase();
-  if (n.startsWith("INC")) return "INCIDENT";
-  if (/^(RITM|REQ|SCTASK|SR)/.test(n)) return "SR";
+/** Reads a type label. Whole words only, so "Include" or "Srinivas" don't count, and a label naming both is no answer. */
+export function typeFromText(raw: unknown): TicketType | null {
+  if (raw == null) return null;
+  const s = clean(String(raw));
+  const incident = /\b(incidents?|inc|outage)\b/.test(s);
+  const request = /\b(service req(uest)?s?|srs?|requests?|reqs?|ritms?|sctasks?|tasks?)\b/.test(s);
+  if (incident === request) return null;
+  return incident ? "INCIDENT" : "SR";
+}
+
+/** True when the whole value is a type label, not just text mentioning one such as "Incident Team". */
+export function isTypeLabel(raw: unknown): boolean {
+  return /^(incidents?|inc|outage|service req(uest)?s?|srs?|requests?|reqs?|ritms?|sctasks?|tasks?)$/.test(clean(String(raw)));
+}
+
+/** Reads a ticket number's prefix, which must be followed by digits: "INC0012345", "SR-104", "RITM 77". */
+export function typeFromNumber(number: unknown): TicketType | null {
+  if (number == null) return null;
+  const n = String(number).trim().toUpperCase();
+  if (/^INC(IDENT)?[\s_-]*\d/.test(n)) return "INCIDENT";
+  if (/^(RITM|REQ|SCTASK|SR)[\s_-]*\d/.test(n)) return "SR";
   return null;
+}
+
+export interface TypeDecision {
+  type: TicketType | null;
+  by: "column" | "number" | "sheet" | null;
+  /** The type column and the number prefix disagree. */
+  conflict: boolean;
+}
+
+/**
+ * Decides incident or SR. A type column is what the team wrote, so it wins; the
+ * number prefix comes next, then a sheet named for one kind ("Incidents").
+ */
+export function classifyType(number: unknown, column?: unknown, sheet: TicketType | null = null): TypeDecision {
+  const fromColumn = typeFromText(column);
+  const fromNumber = typeFromNumber(number);
+  if (fromColumn) return { type: fromColumn, by: "column", conflict: fromNumber !== null && fromNumber !== fromColumn };
+  if (fromNumber) return { type: fromNumber, by: "number", conflict: false };
+  return { type: sheet, by: sheet ? "sheet" : null, conflict: false };
 }
 
 /** Accepts Date, ISO strings, "26/09/2026 14:05", "2026-09-26 14:05:00", Excel serials. */

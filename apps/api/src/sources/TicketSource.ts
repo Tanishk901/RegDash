@@ -1,4 +1,4 @@
-import type { Ticket } from "@regdash/shared";
+import type { SourceReading, Ticket } from "@regdash/shared";
 
 /**
  * Every data source implements this. Swapping mock → Excel → ServiceNow is a
@@ -13,4 +13,6 @@ export interface SourceResult {
   tickets: Ticket[];
   /** Rows the source could not turn into a valid Ticket — surfaced, never silently dropped. */
   rejected: { row: string; reason: string }[];
+  /** How a spreadsheet was understood. Only sources that have to guess report this. */
+  reading?: SourceReading;
 }

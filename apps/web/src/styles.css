@@ -92,6 +92,9 @@ a.button:hover { border-color: var(--accent); }
 .banner-error { background: var(--danger-bg); color: var(--danger); }
 .banner-warn { background: var(--warn-bg); color: var(--warn); }
 .banner-ok { background: var(--ok-bg); color: var(--ok); }
+.banner-info { background: var(--surface-2); }
+.banner-info h3 { margin: 12px 0 4px; font-size: 13px; }
+.banner-info p { margin: 4px 0; }
 .banner-notice { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .banner-notice button.link { color: inherit; flex: none; text-decoration: underline; }
 .banner ul { margin: 8px 0 0; padding-left: 18px; }

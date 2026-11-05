@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { DashboardSummary, TicketView } from "@regdash/shared";
+import type { DashboardSummary, SourceReading, TicketView } from "@regdash/shared";
 
 export interface TicketList {
   items: TicketView[];
@@ -14,6 +14,8 @@ export interface Health {
   lastRefreshedAt: string | null;
   lastError: string | null;
   rejectedRows: { row: string; reason: string }[];
+  /** How a spreadsheet source was understood; null for other sources. */
+  reading: SourceReading | null;
   /** Set when SERVICENOW_BASE_URL is configured; enables "Open in ServiceNow" links. */
   servicenowUrl: string | null;
   /** Set while a workbook uploaded from the dashboard is the live source. */
