@@ -104,6 +104,8 @@ function Dial({ metric, value, needle }: { metric: GaugeMetric; value: number; n
   );
 }
 
+const REVEAL_STAGGER_MS = 100;
+
 function Gauge({ metric, index, sweepKey }: { metric: GaugeMetric; index: number; sweepKey: unknown }) {
   const { value, needle } = useSweep(metric.percent ?? 0, sweepKey, index * STAGGER_MS);
   const band = metric.band && BAND_LABEL[metric.band];
@@ -111,7 +113,8 @@ function Gauge({ metric, index, sweepKey }: { metric: GaugeMetric; index: number
 
   return (
     <Link
-      className="card gauge"
+      className="card gauge gauge-reveal"
+      style={{ animationDelay: `${index * REVEAL_STAGGER_MS}ms` }}
       to={`/tickets?${new URLSearchParams(metric.filter)}`}
       title={`${metric.hint}. Watch from ${metric.watchAt}%, high from ${metric.highAt}%.`}
       aria-label={

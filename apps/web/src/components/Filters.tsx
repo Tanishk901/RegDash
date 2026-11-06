@@ -25,25 +25,25 @@ export function Filters({
         onChange={(e) => onChange({ q: e.target.value || null })}
         aria-label="Search"
       />
-      <select className={set("type")} value={val("type")}onChange={(e) => onChange({ type: e.target.value || null })} aria-label="Type">
+      <select className={set("type")} value={val("type")} onChange={(e) => onChange({ type: e.target.value || null })} aria-label="Type">
         <option value="">All types</option>
         <option value="INCIDENT">Incidents</option>
         <option value="SR">Service requests</option>
       </select>
-      <select className={set("status")} value={val("status")}onChange={(e) => onChange({ status: e.target.value || null })} aria-label="Status">
+      <select className={set("status")} value={val("status")} onChange={(e) => onChange({ status: e.target.value || null })} aria-label="Status">
         <option value="">Open (any status)</option>
         {STATUSES.map((s) => (
           <option key={s} value={s}>{statusLabel(s)}</option>
         ))}
       </select>
-      <select className={set("priority")} value={val("priority")}onChange={(e) => onChange({ priority: e.target.value || null })} aria-label="Priority">
+      <select className={set("priority")} value={val("priority")} onChange={(e) => onChange({ priority: e.target.value || null })} aria-label="Priority">
         <option value="">All priorities</option>
         {PRIORITIES.map((p) => (
           <option key={p} value={p}>{p}</option>
         ))}
         <option value="P1,P2">P1 + P2</option>
       </select>
-      <select className={set("assignedTo")} value={val("assignedTo")}onChange={(e) => onChange({ assignedTo: e.target.value || null })} aria-label="Owner">
+      <select className={set("assignedTo")} value={val("assignedTo")} onChange={(e) => onChange({ assignedTo: e.target.value || null })} aria-label="Owner">
         <option value="">All owners</option>
         <option value="__unassigned">Unassigned</option>
         {owners.map((o) => (

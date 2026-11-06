@@ -179,7 +179,21 @@ function DashboardPage() {
   if (params.get("view") === "workload") return <Navigate to="/workload" replace />;
   if (params.size > 0) return <Navigate to={`/tickets?${params}`} replace />;
 
-  if (!summary) return null;
+  if (!summary)
+    return (
+      <>
+        <div className="section-head">
+          <h2>Needs attention</h2>
+          <p>Loading gauges…</p>
+        </div>
+        <div className="skeleton" aria-busy="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="skeleton-card" />
+          ))}
+        </div>
+      </>
+    );
+
   return (
     <>
       <div className="section-head">
