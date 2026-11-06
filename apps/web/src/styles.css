@@ -155,7 +155,7 @@ a.tab.active { color: var(--accent); background: var(--accent-bg); font-weight: 
 .card-label { font-size: 13px; color: var(--muted); font-weight: 500; }
 
 /* ---------- loading skeleton ---------- */
-.skeleton { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.skeleton { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .skeleton-card {
   height: 180px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border);
   position: relative; overflow: hidden;
@@ -168,14 +168,14 @@ a.tab.active { color: var(--accent); background: var(--accent-bg); font-weight: 
 @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
 /* ---------- gauges ---------- */
-.gauges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.gauges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .card.gauge {
-  flex-direction: row; align-items: center; gap: 20px;
-  padding: 20px 24px 20px 16px;
+  flex-direction: row; align-items: center; gap: 14px;
+  padding: 14px 16px 14px 10px;
   position: relative; overflow: hidden;
 }
-.gauge-dial { flex: none; width: 160px; height: auto; display: block; }
-.gauge .card-label { font-size: 16px; font-weight: 650; color: var(--text); line-height: 1.2; }
+.gauge-dial { flex: none; width: 150px; height: auto; display: block; }
+.gauge .card-label { font-size: 15px; font-weight: 650; color: var(--text); line-height: 1.2; }
 .gauge-seg { stroke-width: 5; stroke-linecap: round; opacity: .18; }
 .gauge-seg.lit { opacity: 1; }
 .gauge-seg-ok { stroke: var(--gauge-ok); }
@@ -305,6 +305,8 @@ button.icon:hover:not(:disabled) { background: var(--surface-2); border-radius: 
 }
 
 @media (max-width: 1000px) {
+  .gauges { grid-template-columns: repeat(2, 1fr); }
+  .skeleton { grid-template-columns: repeat(2, 1fr); }
   .appbar { position: static; }
   .tabs { order: 3; width: 100%; overflow-x: auto; }
 }
