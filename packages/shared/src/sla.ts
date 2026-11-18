@@ -1,14 +1,20 @@
 import type { Priority, SlaState, Ticket, TicketView } from "./types";
 
-/**
- * Default resolution targets in hours, used only when the source gives no SLA
- * due date. These are PLACEHOLDERS — replace with your team's real SLA matrix.
- */
+// Support model: Silver, 16×5 (16 h/day, Mon–Fri).
+// P1/P2 clock: 16×5 support window.  P3/P4 clock: business days (×16 h).
+
+export const RESPONSE_SLA_HOURS: Record<Priority, number> = {
+  P1: 0.5,   // 30 minutes
+  P2: 1,     // 1 hour
+  P3: 16,    // 1 business day
+  P4: 16,    // 1 business day
+};
+
 export const DEFAULT_SLA_HOURS: Record<Priority, number> = {
-  P1: 4,
-  P2: 24,
-  P3: 72,
-  P4: 120,
+  P1: 4,     // 4 hours
+  P2: 8,     // 8 hours
+  P3: 80,    // 5 business days (5 × 16 h)
+  P4: 128,   // 8 business days (8 × 16 h)
 };
 
 /** Fraction of the SLA window after which a ticket counts as "at risk". */

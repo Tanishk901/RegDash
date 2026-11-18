@@ -5,17 +5,14 @@ export const UNASSIGNED = "Unassigned";
 
 export type GaugeBand = "OK" | "WATCH" | "HIGH";
 
-/**
- * Where each gauge turns from OK to Watch and from Watch to High, in percent.
- * These are PLACEHOLDERS — replace with the limits the team actually agrees on.
- */
+// Tuned for Silver 16×5 support with P1 4 h / P2 8 h resolution SLAs.
 export const GAUGE_LIMITS = {
-  breached: { watchAt: 5, highAt: 15 },
-  atRisk: { watchAt: 10, highAt: 25 },
+  breached: { watchAt: 3, highAt: 10 },
+  atRisk: { watchAt: 8, highAt: 20 },
   stale: { watchAt: 10, highAt: 25 },
-  unassigned: { watchAt: 10, highAt: 25 },
-  onHold: { watchAt: 25, highAt: 50 },
-  highPriority: { watchAt: 25, highAt: 50 },
+  unassigned: { watchAt: 5, highAt: 15 },
+  onHold: { watchAt: 20, highAt: 40 },
+  highPriority: { watchAt: 20, highAt: 40 },
 } as const;
 
 export interface GaugeMetric {

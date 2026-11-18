@@ -7,7 +7,7 @@ const base: Ticket = {
   type: "INCIDENT",
   shortDescription: "test",
   status: "IN_PROGRESS",
-  priority: "P2", // 24h default SLA
+  priority: "P2", // 8h default SLA
   assignedTo: "A",
   assignmentGroup: "G",
   pendingOwner: null,
@@ -26,10 +26,10 @@ const base: Ticket = {
 
 describe("computeSla", () => {
   it("is OK early in the window", () => {
-    expect(computeSla(base, new Date("2026-01-01T06:00:00Z"))).toBe("OK");
+    expect(computeSla(base, new Date("2026-01-01T04:00:00Z"))).toBe("OK");
   });
   it("is AT_RISK after 75% of the window", () => {
-    expect(computeSla(base, new Date("2026-01-01T19:00:00Z"))).toBe("AT_RISK");
+    expect(computeSla(base, new Date("2026-01-01T07:00:00Z"))).toBe("AT_RISK");
   });
   it("is BREACHED past the due time", () => {
     expect(computeSla(base, new Date("2026-01-02T01:00:00Z"))).toBe("BREACHED");

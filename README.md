@@ -161,8 +161,8 @@ regdash/
 
 ## Before showing it to anyone
 
-- [ ] Replace the placeholder SLA hours in `packages/shared/src/sla.ts` with the team's real SLA matrix.
-- [ ] Replace the placeholder gauge limits (`GAUGE_LIMITS` in `packages/shared/src/gauges.ts`) with the limits the team agrees on.
+- [x] Replace the placeholder SLA hours in `packages/shared/src/sla.ts` with the team's real SLA matrix.
+- [x] Replace the placeholder gauge limits (`GAUGE_LIMITS` in `packages/shared/src/gauges.ts`) with the limits the team agrees on.
 - [ ] Check how the real tracker is read, using **How this file was read**.
 - [ ] Agree the `Next:` / `Blocker:` / `Pending:` work-note convention if you're using the ServiceNow source.
 
