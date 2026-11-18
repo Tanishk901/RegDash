@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { STATUSES, formatDuration, formatEffort, slaDueAt, type TicketStatus, type TicketView } from "@regdash/shared";
 import { api, serviceNowLink, usePolling, type TeamInfo } from "../lib/api";
-import { PriorityBadge, SlaBadge, StatusBadge, TypeTag, statusLabel } from "./Badges";
+import { PriorityBadge, SlaBadge, SlaDetailBadge, StatusBadge, TypeTag, statusLabel } from "./Badges";
+
+type CommentKind = "work_note" | "customer_comment";
 
 const fmt = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -10,8 +12,10 @@ const CURRENT_USER = "You";
 
 function CommentForm({ number, onDone }: { number: string; onDone: () => void }) {
   const [note, setNote] = useState("");
+  const [kind, setKind] = useState<CommentKind>("work_note");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
 
   const submit = async () => {
@@ -21,6 +25,8 @@ function CommentForm({ number, onDone }: { number: string; onDone: () => void })
     try {
       await api.addComment(number, note.trim(), CURRENT_USER);
       setNote("");
+      setConfirmed(true);
+      setTimeout(() => setConfirmed(false), 5000);
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -31,10 +37,26 @@ function CommentForm({ number, onDone }: { number: string; onDone: () => void })
 
   return (
     <div className="comment-form">
+      <div className="comment-kind-toggle">
+        <button
+          className={`kind-btn ${kind === "work_note" ? "active" : ""}`}
+          onClick={() => setKind("work_note")}
+          type="button"
+        >
+          Work note
+        </button>
+        <button
+          className={`kind-btn ${kind === "customer_comment" ? "active" : ""}`}
+          onClick={() => setKind("customer_comment")}
+          type="button"
+        >
+          Customer comment
+        </button>
+      </div>
       <textarea
         ref={ref}
         className="comment-input"
-        placeholder="Add a comment…"
+        placeholder={kind === "work_note" ? "Add a work note…" : "Add a customer comment…"}
         rows={3}
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -44,10 +66,11 @@ function CommentForm({ number, onDone }: { number: string; onDone: () => void })
         disabled={saving}
       />
       {error && <p className="error small">{error}</p>}
+      {confirmed && <p className="confirm-fade small">Comment added.</p>}
       <div className="comment-actions">
         <span className="muted small">Ctrl+Enter to send</span>
         <button onClick={submit} disabled={saving || !note.trim()}>
-          {saving ? "Sending…" : "Add comment"}
+          {saving ? "Sending…" : kind === "work_note" ? "Add work note" : "Add comment"}
         </button>
       </div>
     </div>
@@ -198,6 +221,8 @@ export function TicketDetail({
                 <StatusBadge s={t.status} />
               )}
               <SlaBadge s={t.sla} />
+              {t.responseSla && <SlaDetailBadge detail={t.responseSla} />}
+              {t.resolutionSla && <SlaDetailBadge detail={t.resolutionSla} />}
               {t.stale && <span className="badge sla-AT_RISK">No update 48h+</span>}
             </div>
 
@@ -258,6 +283,10 @@ export function TicketDetail({
                 {fmt(slaDueAt(t).toISOString())}
                 {!t.slaDueAt && <span className="muted"> (default for {t.priority})</span>}
               </dd>
+              {t.application && (<><dt>Application</dt><dd>{t.application}</dd></>)}
+              {t.environment && (<><dt>Environment</dt><dd>{t.environment}</dd></>)}
+              {t.configurationItem && (<><dt>Config item</dt><dd>{t.configurationItem}</dd></>)}
+              {t.serviceOffering && (<><dt>Service offering</dt><dd>{t.serviceOffering}</dd></>)}
               <dt>Source</dt><dd>{t.source}</dd>
             </dl>
 
