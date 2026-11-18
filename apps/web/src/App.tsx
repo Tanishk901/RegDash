@@ -18,6 +18,7 @@ import { Filters } from "./components/Filters";
 import { Gauges } from "./components/Gauges";
 import { Logo, RefreshIcon } from "./components/Icons";
 import { SourceReadingPanel } from "./components/SourceReadingPanel";
+import { SourceStatus } from "./components/SourceStatus";
 import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
 import { TicketTable } from "./components/TicketTable";
@@ -112,6 +113,7 @@ function Shell() {
             <NavLink className={tabClass} to="/workload">Team workload</NavLink>
           </nav>
           <div className="meta">
+            {h && <SourceStatus health={h} />}
             {h && !h.upload && <span className={`source source-${h.source}`}>Source: {h.source}</span>}
             {h?.upload && (
               <span className="source source-upload" title={h.upload.fileName}>Source: {h.upload.fileName}</span>
