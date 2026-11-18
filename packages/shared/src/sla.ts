@@ -134,14 +134,17 @@ export function computeDetailedSla(
   return { sla, response, resolution };
 }
 
-export function toView(ticket: Ticket, now: Date = new Date()): TicketView {
+export function toView(ticket: Ticket, now: Date = new Date(), policy?: SlaPolicy): TicketView {
   const hoursSinceUpdate = hoursBetween(ticket.updatedAt, now);
   const open = ticket.status !== "RESOLVED" && ticket.status !== "CLOSED";
+  const detailed = computeDetailedSla(ticket, policy, now);
   return {
     ...ticket,
     ageHours: hoursBetween(ticket.createdAt, now),
     hoursSinceUpdate,
     sla: computeSla(ticket, now),
+    responseSla: detailed.response,
+    resolutionSla: detailed.resolution,
     stale: open && hoursSinceUpdate >= STALE_AFTER_HOURS,
     pendingHours:
       ticket.status === "ON_HOLD" && ticket.pendingSince ? hoursBetween(ticket.pendingSince, now) : null,
