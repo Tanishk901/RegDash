@@ -1,4 +1,4 @@
-import type { Priority, TicketStatus, TicketType } from "@regdash/shared";
+import type { ApplicationCode, Environment, Priority, TicketStatus, TicketType } from "@regdash/shared";
 
 /**
  * Real data is messy: Excel sheets say "WIP", "Awaiting user", "1 - Critical",
@@ -147,6 +147,42 @@ export function normalizeText(raw: unknown): string | null {
   if (raw == null) return null;
   const s = String(raw).trim();
   return s ? s : null;
+}
+
+const APP_ALIASES: Record<string, ApplicationCode> = {
+  regcreate: "REGCREATE", "reg create": "REGCREATE", rc: "REGCREATE",
+  symphony: "SYMPHONY", sym: "SYMPHONY",
+  sonata: "SONATA",
+  gle: "GLE", "global label engine": "GLE",
+  clrr: "CLRR",
+};
+
+export function normalizeApplication(raw: unknown): ApplicationCode | null {
+  if (raw == null) return null;
+  const s = clean(String(raw));
+  if (!s) return null;
+  if (s in APP_ALIASES) return APP_ALIASES[s]!;
+  for (const [alias, code] of Object.entries(APP_ALIASES)) {
+    if (s.includes(alias)) return code;
+  }
+  return s ? "OTHER" : null;
+}
+
+const ENV_ALIASES: Record<string, Environment> = {
+  prod: "PROD", production: "PROD", prd: "PROD",
+  qa: "QA", uat: "QA", test: "QA", testing: "QA", stage: "QA", staging: "QA",
+  dev: "DEV", development: "DEV", sandbox: "DEV",
+};
+
+export function normalizeEnvironment(raw: unknown): Environment | null {
+  if (raw == null) return null;
+  const s = clean(String(raw));
+  if (!s) return null;
+  if (s in ENV_ALIASES) return ENV_ALIASES[s]!;
+  for (const [alias, code] of Object.entries(ENV_ALIASES)) {
+    if (s.includes(alias)) return code;
+  }
+  return s ? "OTHER" : null;
 }
 
 /**

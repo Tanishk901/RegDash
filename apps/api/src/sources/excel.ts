@@ -5,9 +5,11 @@ import type { SourceResult, TicketSource } from "./TicketSource";
 import {
   classifyType,
   isTypeLabel,
+  normalizeApplication,
   normalizeCount,
   normalizeDate,
   normalizeDuration,
+  normalizeEnvironment,
   normalizePriority,
   normalizeStatus,
   normalizeText,
@@ -31,7 +33,8 @@ type Field =
   | "number" | "type" | "shortDescription" | "description" | "status" | "priority"
   | "assignedTo" | "assignmentGroup" | "pendingOwner" | "blocker" | "nextAction"
   | "requestedBy" | "createdAt" | "updatedAt" | "pendingSince" | "slaDueAt" | "lastUpdateNote"
-  | "taskHours" | "itemCount";
+  | "taskHours" | "itemCount"
+  | "application" | "environment" | "configurationItem" | "serviceOffering";
 
 export const HEADER_ALIASES: Record<Field, string[]> = {
   number: ["number", "ticket", "ticket number", "ticket no", "inc/sr number", "id", "incident", "inc", "sr", "ritm", "reference"],
@@ -57,6 +60,10 @@ export const HEADER_ALIASES: Record<Field, string[]> = {
     "time per item", "avg time per item", "average time per item", "time taken per task", "effort",
   ],
   itemCount: ["items", "no of items", "no. of items", "number of items", "item count", "n", "qty", "quantity"],
+  application: ["application", "app", "application name", "app name", "product", "system"],
+  environment: ["environment", "env", "environment name", "env name"],
+  configurationItem: ["configuration item", "ci", "cmdb ci", "config item"],
+  serviceOffering: ["service offering", "service", "offering"],
 };
 
 // Punctuation and a trailing unit note like "Avg Time (hrs)" are ignored, so "Ticket_No." and "Ticket #" both match.
@@ -159,6 +166,10 @@ export function rowToTicket(
       itemCount: normalizeCount(get("itemCount")),
       updates: note ? [{ at: updatedAt, by: assignedTo ?? "Tracker", note }] : [],
       source: "excel",
+      application: normalizeApplication(get("application")),
+      environment: normalizeEnvironment(get("environment")),
+      configurationItem: normalizeText(get("configurationItem")),
+      serviceOffering: normalizeText(get("serviceOffering")),
     },
   };
 }
