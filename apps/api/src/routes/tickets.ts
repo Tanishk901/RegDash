@@ -179,10 +179,14 @@ export function ticketRoutes(store: TicketStore, { now = () => new Date(), servi
 
   r.post("/tickets/:number/comments", async (req, res, next) => {
     if (!store.writable) return res.status(403).json({ error: "Data source is read-only" });
-    const body = z.object({ note: z.string().min(1).max(4000), by: z.string().min(1).max(200) }).safeParse(req.body);
+    const body = z.object({
+      note: z.string().min(1).max(4000),
+      by: z.string().min(1).max(200),
+      kind: z.enum(["work_note", "customer_comment"]).optional(),
+    }).safeParse(req.body);
     if (!body.success) return res.status(400).json({ error: body.error.flatten().fieldErrors });
     try {
-      await store.addComment(req.params.number, body.data.note, body.data.by);
+      await store.addComment(req.params.number, body.data.note, body.data.by, body.data.kind);
       const t = store.get(req.params.number);
       res.json(t ? toView(t, now()) : { ok: true });
     } catch (err) {

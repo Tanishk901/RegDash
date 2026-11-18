@@ -1,4 +1,4 @@
-import type { Ticket, TicketStatus } from "@regdash/shared";
+import type { CommentKind, Ticket, TicketStatus } from "@regdash/shared";
 import { isWritable, type SourceResult, type TicketSource, type WritableTicketSource } from "../sources/TicketSource";
 
 /**
@@ -89,8 +89,8 @@ export class TicketStore {
     return this.source;
   }
 
-  async addComment(number: string, note: string, by: string): Promise<void> {
-    await this.writableSource().addComment(number, note, by);
+  async addComment(number: string, note: string, by: string, kind?: CommentKind): Promise<void> {
+    await this.writableSource().addComment(number, note, by, kind);
   }
 
   async updateAssignment(number: string, assignedTo: string | null): Promise<void> {

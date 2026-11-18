@@ -1,5 +1,5 @@
 import { DEFAULT_SLA_HOURS } from "@regdash/shared";
-import type { ApplicationCode, Environment, Priority, Ticket, TicketStatus, TicketType, TicketUpdate } from "@regdash/shared";
+import type { ApplicationCode, CommentKind, Environment, Priority, Ticket, TicketStatus, TicketType, TicketUpdate } from "@regdash/shared";
 import type { SourceResult, WritableTicketSource } from "./TicketSource";
 
 /**
@@ -166,9 +166,9 @@ export class MockSource implements WritableTicketSource {
     return { tickets: this.ensure(), rejected: [] };
   }
 
-  async addComment(number: string, note: string, by: string): Promise<void> {
+  async addComment(number: string, note: string, by: string, kind?: CommentKind): Promise<void> {
     const t = this.find(number);
-    t.updates.push({ at: new Date().toISOString(), by, note });
+    t.updates.push({ at: new Date().toISOString(), by, note, kind });
     t.updatedAt = new Date().toISOString();
   }
 

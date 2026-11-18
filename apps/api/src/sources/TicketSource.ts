@@ -1,4 +1,4 @@
-import type { SourceReading, Ticket, TicketStatus } from "@regdash/shared";
+import type { CommentKind, SourceReading, Ticket, TicketStatus } from "@regdash/shared";
 
 /**
  * Every data source implements this. Swapping mock → Excel → ServiceNow is a
@@ -11,7 +11,7 @@ export interface TicketSource {
 
 /** Sources that support writing back (mock, ServiceNow). Excel is read-only. */
 export interface WritableTicketSource extends TicketSource {
-  addComment(number: string, note: string, by: string): Promise<void>;
+  addComment(number: string, note: string, by: string, kind?: CommentKind): Promise<void>;
   updateAssignment(number: string, assignedTo: string | null): Promise<void>;
   updateStatus(number: string, status: TicketStatus, by: string): Promise<void>;
   teamMembers(): string[];

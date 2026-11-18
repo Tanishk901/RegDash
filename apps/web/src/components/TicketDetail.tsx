@@ -23,7 +23,7 @@ function CommentForm({ number, onDone }: { number: string; onDone: () => void })
     setSaving(true);
     setError(null);
     try {
-      await api.addComment(number, note.trim(), CURRENT_USER);
+      await api.addComment(number, note.trim(), CURRENT_USER, kind);
       setNote("");
       setConfirmed(true);
       setTimeout(() => setConfirmed(false), 5000);
@@ -304,7 +304,10 @@ export function TicketDetail({
                 <ol className="timeline">
                   {[...t.updates].reverse().map((u, i) => (
                     <li key={i}>
-                      <div className="when">{fmt(u.at)} · {u.by}</div>
+                      <div className="when">
+                        {fmt(u.at)} · {u.by}
+                        {u.kind && <span className="comment-kind"> · {u.kind === "work_note" ? "Work note" : "Customer"}</span>}
+                      </div>
                       <div className="pre">{u.note}</div>
                     </li>
                   ))}

@@ -24,10 +24,13 @@ export type Priority = "P1" | "P2" | "P3" | "P4";
 /** PAUSED = ticket is ON_HOLD; the team's SLA clock stops while waiting on others. */
 export type SlaState = "OK" | "AT_RISK" | "BREACHED" | "PAUSED";
 
+export type CommentKind = "work_note" | "customer_comment";
+
 export interface TicketUpdate {
   at: string; // ISO timestamp
   by: string;
   note: string;
+  kind?: CommentKind;
 }
 
 export interface Ticket {

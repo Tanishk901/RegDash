@@ -102,11 +102,11 @@ export const api = {
     }),
   removeUpload: () => send<RemoveUploadResult>("/api/upload", { method: "DELETE" }),
 
-  addComment: (number: string, note: string, by: string) =>
+  addComment: (number: string, note: string, by: string, kind?: "work_note" | "customer_comment") =>
     send<TicketView>(`/api/tickets/${encodeURIComponent(number)}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ note, by }),
+      body: JSON.stringify({ note, by, kind }),
     }),
   assignTicket: (number: string, assignedTo: string | null) =>
     send<TicketView>(`/api/tickets/${encodeURIComponent(number)}/assign`, {
