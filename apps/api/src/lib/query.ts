@@ -1,10 +1,14 @@
 import {
+  APPLICATION_CODES,
+  ENVIRONMENTS,
   OPEN_STATUSES,
   PRIORITIES,
   STATUSES,
   toView,
   UNASSIGNED,
+  type ApplicationCode,
   type DashboardSummary,
+  type Environment,
   type OwnerWorkload,
   type Priority,
   type SlaState,
@@ -33,6 +37,8 @@ export function applyFilters(views: TicketView[], f: TicketFilters): TicketView[
         if (t.assignedTo) return false;
       } else if (t.assignedTo !== f.assignedTo) return false;
     }
+    if (f.application && t.application !== f.application) return false;
+    if (f.environment && t.environment !== f.environment) return false;
     if (q) {
       const hay = [t.number, t.shortDescription, t.assignedTo, t.pendingOwner, t.requestedBy, t.nextAction]
         .filter(Boolean)
@@ -68,11 +74,15 @@ export function summarize(
   const zeroByPriority = () => Object.fromEntries(PRIORITIES.map((p) => [p, 0])) as Record<Priority, number>;
   const byPriority = zeroByPriority();
   const byStatus = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<TicketStatus, number>;
+  const byApplication = Object.fromEntries(APPLICATION_CODES.map((a) => [a, 0])) as Record<ApplicationCode, number>;
+  const byEnvironment = Object.fromEntries(ENVIRONMENTS.map((e) => [e, 0])) as Record<Environment, number>;
   const owners = new Map<string, OwnerWorkload>();
 
   for (const t of tickets) byStatus[t.status]++;
   for (const t of open) {
     byPriority[t.priority]++;
+    if (t.application) byApplication[t.application]++;
+    if (t.environment) byEnvironment[t.environment]++;
     const name = t.assignedTo ?? UNASSIGNED;
     let w = owners.get(name);
     if (!w) {
@@ -99,6 +109,8 @@ export function summarize(
     stale: open.filter((t) => t.stale).length,
     onHold: open.filter((t) => t.status === "ON_HOLD").length,
     byOwner: [...owners.values()].sort((a, b) => b.count - a.count),
+    byApplication,
+    byEnvironment,
     lastRefreshedAt: meta.lastRefreshedAt,
     source: meta.source,
   };
