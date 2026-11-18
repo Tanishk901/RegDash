@@ -96,6 +96,22 @@ h1 { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -.01em; line-
 .source-mock { color: var(--warn); }
 .source-upload { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* source status indicator */
+.source-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.source-status-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.source-status-current .source-status-dot { background: var(--ok); }
+.source-status-stale .source-status-dot { background: var(--warn); }
+.source-status-degraded .source-status-dot { background: var(--warn); }
+.source-status-unavailable .source-status-dot { background: var(--danger); }
+.source-status-mock .source-status-dot { background: var(--muted); }
+.source-status-uploaded .source-status-dot { background: var(--accent); }
+.source-status-current { color: var(--ok); }
+.source-status-stale { color: var(--warn); }
+.source-status-degraded { color: var(--warn); }
+.source-status-unavailable { color: var(--danger); }
+.source-status-mock { color: var(--muted); }
+.source-status-uploaded { color: var(--accent); }
+
 button {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xs);
@@ -153,6 +169,13 @@ a.tab.active { color: var(--accent); background: var(--accent-bg); font-weight: 
 .card:hover { border-color: var(--accent); box-shadow: var(--shadow-raised); transform: translateY(-2px); }
 .card-value { font-size: 30px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .card-label { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+/* breakdown cards (by application / environment) */
+.cards-breakdown { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.cards-heading { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+.card-sm { padding: 10px 14px; }
+.card-sm .card-value { font-size: 20px; }
+.card-sm .card-label { font-size: 11px; }
 
 /* ---------- loading skeleton ---------- */
 .skeleton { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -235,6 +258,7 @@ table.tickets { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tickets tbody tr.selected { background: var(--accent-bg); box-shadow: inset 3px 0 0 var(--accent); }
 .tickets tbody tr:last-child td { border-bottom: none; }
 .tickets .summary { min-width: 240px; }
+.tickets .app { white-space: nowrap; font-size: 12px; font-weight: 600; }
 .tickets .next { min-width: 220px; color: var(--text); }
 .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 th.num { text-align: right; }
@@ -268,6 +292,14 @@ th.num { text-align: right; }
 .type { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); margin-right: 4px; }
 .type-INCIDENT { color: var(--danger); border-color: currentColor; }
 .type-SR { color: var(--accent); border-color: currentColor; }
+
+/* SLA detail badges (response / resolution) */
+.sla-detail { font-size: 11px; padding: 2px 7px; }
+.sla-detail-OK { background: var(--ok-bg); color: var(--ok); }
+.sla-detail-AT_RISK { background: var(--warn-bg); color: var(--warn); }
+.sla-detail-BREACHED { background: var(--danger-bg); color: var(--danger); }
+.sla-detail-PAUSED { background: var(--surface-2); color: var(--muted); }
+.sla-detail-na { background: var(--surface-2); color: var(--muted); }
 
 /* ---------- detail panel ---------- */
 .scrim { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .35); backdrop-filter: blur(2px); }
@@ -309,6 +341,21 @@ button.icon:hover:not(:disabled) { background: var(--surface-2); border-radius: 
 .comment-input:focus { border-color: var(--accent); box-shadow: var(--shadow-glow); outline: none; }
 .comment-input:disabled { opacity: .6; }
 .comment-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+
+/* comment kind toggle */
+.comment-kind-toggle { display: flex; gap: 0; margin-bottom: 8px; }
+.kind-btn {
+  border: 1px solid var(--border); background: var(--surface); padding: 5px 12px; font-size: 12px; font-weight: 500;
+  cursor: pointer; box-shadow: none; transition: all .15s ease;
+}
+.kind-btn:first-child { border-radius: var(--radius-xs) 0 0 var(--radius-xs); }
+.kind-btn:last-child { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; border-left: none; }
+.kind-btn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.kind-btn:hover:not(.active) { background: var(--surface-2); }
+
+/* write confirmation fade */
+.confirm-fade { color: var(--ok); font-weight: 500; margin: 4px 0; animation: confirmFade 5s ease forwards; }
+@keyframes confirmFade { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ---------- inline selects (assign / status) ---------- */
 .inline-select {
