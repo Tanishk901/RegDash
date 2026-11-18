@@ -19,7 +19,7 @@
 
 [Features](#features) · [Quick start](#quick-start) · [Pages](#pages) · [Data sources](#data-sources) · [Architecture](#architecture) · [Commands](#commands) · [Before showing it to anyone](#before-showing-it-to-anyone) · [Roadmap](#roadmap)
 
-Phase 1 is read-only visibility. Requirements and design are in **[docs/PHASE-1.md](docs/PHASE-1.md)**.
+Phase 1 (read-only dashboard) is complete. Phases 2 and 3 are in [Roadmap](#roadmap). Full Phase 1 requirements are in **[docs/PHASE-1.md](docs/PHASE-1.md)**.
 
 ## Features
 
@@ -131,6 +131,115 @@ regdash/
 └── docs/             Requirements, design and screenshots
 ```
 
+### Data flow
+
+How a ticket moves from raw data to the screen:
+
+```mermaid
+flowchart TD
+    subgraph Input
+        E[Excel tracker .xlsx] -->|smart detection| P[Parse sheets & columns]
+        SN[ServiceNow API] -->|REST call| F[Fetch incidents & SRs]
+        MK[Mock generator] --> G[Generate fake tickets]
+    end
+
+    P --> N[Normalize]
+    F --> N
+    G --> N
+
+    N -->|"one unified Ticket shape"| SLA[SLA engine<br>calculate state & breach time]
+    SLA --> Cache[In-memory cache<br>auto-refresh on timer]
+    Cache --> API[Express REST API]
+
+    API --> Summary["/api/summary<br>gauge counts, workload"]
+    API --> Tickets["/api/tickets<br>filtered, sorted list"]
+    API --> Detail["/api/tickets/:id<br>single ticket"]
+    API --> Export["/api/tickets.csv<br>CSV download"]
+```
+
+### Frontend components
+
+```mermaid
+flowchart TD
+    App[App.tsx<br>router & layout]
+    App --> Dash[Dashboard Page]
+    App --> TL[Tickets Page]
+    App --> WL[Workload Page]
+
+    Dash --> SC[SummaryCards<br>open/closed/total counts]
+    Dash --> GA[Gauges<br>six attention gauges]
+    Dash --> EU[ExcelUpload<br>upload & manage tracker]
+    Dash --> SRP[SourceReadingPanel<br>how the file was read]
+
+    TL --> FI[Filters<br>type, status, priority, SLA, search]
+    TL --> TT[TicketTable<br>sortable rows with badges]
+    TL --> TD[TicketDetail<br>side panel with timeline]
+
+    WL --> WC[Workload<br>per-engineer breakdown]
+
+    TT --> BA[Badges<br>priority, SLA, type pills]
+    TD --> BA
+```
+
+### User navigation
+
+```mermaid
+flowchart LR
+    Start([Open RegDash]) --> Home[Dashboard<br>gauges + totals]
+
+    Home -->|click a gauge| Filtered[Tickets<br>pre-filtered to that gauge]
+    Home -->|click Tickets nav| All[Tickets<br>all open work]
+    Home -->|click Workload nav| Work[Workload<br>per-engineer view]
+    Home -->|click Upload Excel| Upload[Upload .xlsx tracker]
+
+    All -->|search, filter, sort| Refined[Refined ticket list]
+    Refined -->|click a row| Detail[Ticket detail panel]
+    Refined -->|click Export CSV| CSV[Download CSV]
+    Detail -->|click Open in ServiceNow| SNow([ServiceNow])
+
+    Upload -->|file accepted| Home
+```
+
+### Phase progression
+
+How the system grows across phases:
+
+```mermaid
+flowchart LR
+    subgraph Phase1["Phase 1 — Visibility ✅"]
+        direction TB
+        P1A[Mock / Excel data]
+        P1B[Rule-based detection]
+        P1C[Gauges, table, detail]
+        P1D[SLA engine]
+        P1E[CSV export]
+    end
+
+    subgraph Phase2["Phase 2 — Live Data & Collaboration"]
+        direction TB
+        P2A[ServiceNow live API]
+        P2B[Comments & assignments]
+        P2C[Write-back to ServiceNow]
+        P2D[Auth & SSO]
+    end
+
+    subgraph Phase3["Phase 3 — Automation"]
+        direction TB
+        P3A[Outlook / Teams emails]
+        P3B[Mailbox ingestion]
+        P3C[Custom dashboard builder]
+    end
+
+    subgraph Phase4["Phase 4 — AI Copilot"]
+        direction TB
+        P4A[RAG over SOPs]
+        P4B[Resolution suggestions]
+        P4C[Auto-triage]
+    end
+
+    Phase1 --> Phase2 --> Phase3 --> Phase4
+```
+
 <details>
 <summary><b>REST API</b></summary>
 
@@ -168,7 +277,82 @@ regdash/
 
 ## Roadmap
 
-1. **Visibility.** This dashboard ✅
-2. **Access automation.** Templated welcome and access emails when a user is provisioned
-3. **Mailbox → ServiceNow.** Classify shared-mailbox emails, draft INC/SR, human approves, send acknowledgment
-4. **Support copilot.** RAG over SOPs and past tickets to suggest resolutions, with sources
+```mermaid
+gantt
+    title RegDash Phases
+    dateFormat YYYY-MM
+    axisFormat %b %Y
+    section Phase 1 — Visibility
+        React dashboard + mock/Excel data     :done, p1a, 2026-07, 2026-10
+        Rule-based SR & Incident detection     :done, p1b, 2026-08, 2026-10
+        SLA engine & attention gauges          :done, p1c, 2026-08, 2026-10
+    section Phase 2 — Live Data & Collaboration
+        Comments & ticket assignment           :p2a, 2026-11, 2027-02
+        ServiceNow live data integration       :p2b, 2026-12, 2027-03
+        Write-back to ServiceNow               :p2c, 2027-01, 2027-03
+        Export from any filtered view          :p2d, 2027-01, 2027-03
+    section Phase 3 — Automation
+        Outlook/Teams auto-emails              :p3a, 2027-03, 2027-06
+        Mailbox ingestion & auto-ticket        :p3b, 2027-04, 2027-07
+        Custom dashboard builder               :p3c, 2027-04, 2027-07
+        Bulk mail & notification system        :p3d, 2027-04, 2027-07
+    section Phase 4 — AI Copilot
+        RAG over SOPs & past tickets           :p4a, 2027-07, 2027-10
+        Resolution suggestions with sources    :p4b, 2027-08, 2027-11
+```
+
+### Phase 1 — Read-only Dashboard (current) ✅
+
+> A React dashboard on mock data or an uploaded Excel tracker, with rule-based keyword detection to accurately identify SRs and Incidents. Built to be **replaceable and implementable for any project**, not just RegCreate.
+
+| Delivered | Status |
+|---|---|
+| Six attention gauges (breached, at risk, stale, unassigned, on hold, high priority) | ✅ Done |
+| Filterable, sortable ticket table with shareable URL filters | ✅ Done |
+| Ticket detail panel (next action, blocker, timeline, ServiceNow link) | ✅ Done |
+| Team workload view (per-engineer breakdown by priority and SLA) | ✅ Done |
+| Excel upload with smart sheet/column/ticket-type detection | ✅ Done |
+| SLA engine with pause-on-external-wait logic | ✅ Done |
+| CSV export of the current filtered view | ✅ Done |
+| Real 16×5 SLA matrix from team agreement | ✅ Done |
+
+Full requirements and design: **[docs/PHASE-1.md](docs/PHASE-1.md)**
+
+### Phase 2 — Live Data and Collaboration
+
+> Connect the dashboard to live ServiceNow data, let the team add comments and assign tickets, write back changes, and export any view.
+
+| Planned | Description |
+|---|---|
+| **Comments and assignments** | Add and update comments on tickets directly from the dashboard. Assign or reassign tickets to team members without leaving the view. |
+| **ServiceNow live integration** | Connect to ServiceNow Table API for real-time SR and Incident viewing. Auto-refresh on a configurable interval. Requires a read-only service account (or OAuth client) scoped to `incident` + `sc_req_item`. |
+| **Write-back to ServiceNow** | Create and update tickets from the dashboard. No more switching to ServiceNow for routine status changes, reassignments or notes. |
+| **Advanced export** | Export data from the current dashboard view or any selected filter combination. Support for CSV and Excel formats, with the ability to pick which columns to include. |
+| **Authentication and SSO** | Add role-based access so the dashboard can be hosted beyond localhost. SSO (company identity provider) gates who can view, comment and assign. |
+
+Full requirements and design: **[docs/PHASE-2.md](docs/PHASE-2.md)**
+
+### Phase 3 — Automation and Custom Views
+
+> Automate routine communication (Outlook, Teams), ingest the shared mailbox, and let users build any dashboard view by picking columns.
+
+| Planned | Description |
+|---|---|
+| **Outlook and Teams auto-emails** | Automatically open Outlook/Teams to send reminder mails, acknowledgements, and welcome emails to users provisioned for the RegCreate application. |
+| **Bulk and templated mails** | Send other kinds of emails (follow-ups, escalation notices, status updates) using configurable templates. |
+| **Mailbox ingestion** | Classify incoming emails from the shared mailbox, auto-draft an INC or SR in ServiceNow, let a human review and approve, then send an acknowledgement to the requester. |
+| **Custom dashboard builder** | Create any dashboard or view by selecting columns — for example, all tickets assigned to a person, with their SRs, Incidents, SLA state, and work progress side by side. |
+
+Full requirements and design: **[docs/PHASE-3.md](docs/PHASE-3.md)**
+
+### Phase 4 — Support Copilot
+
+> An AI layer that learns from SOPs and past tickets to help engineers resolve issues faster.
+
+| Planned | Description |
+|---|---|
+| **RAG over SOPs and past tickets** | Index standard operating procedures, resolution notes and historical tickets so engineers can search them in natural language from the dashboard. |
+| **Resolution suggestions** | When viewing a ticket, the copilot suggests resolution steps based on similar past tickets and SOPs, always showing its sources so engineers can verify. |
+| **Auto-triage** | Incoming tickets are scored by urgency and category, with a suggested assignment, before a human reviews. |
+
+Full requirements and design: **[docs/PHASE-4.md](docs/PHASE-4.md)**
