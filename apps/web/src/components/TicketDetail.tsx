@@ -1,21 +1,156 @@
-import { useEffect } from "react";
-import { formatDuration, formatEffort, slaDueAt } from "@regdash/shared";
-import { api, serviceNowLink, usePolling } from "../lib/api";
-import { PriorityBadge, SlaBadge, StatusBadge, TypeTag } from "./Badges";
+import { useEffect, useRef, useState } from "react";
+import { STATUSES, formatDuration, formatEffort, slaDueAt, type TicketStatus, type TicketView } from "@regdash/shared";
+import { api, serviceNowLink, usePolling, type TeamInfo } from "../lib/api";
+import { PriorityBadge, SlaBadge, StatusBadge, TypeTag, statusLabel } from "./Badges";
 
 const fmt = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
+
+const CURRENT_USER = "You";
+
+function CommentForm({ number, onDone }: { number: string; onDone: () => void }) {
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  const submit = async () => {
+    if (!note.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.addComment(number, note.trim(), CURRENT_USER);
+      setNote("");
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="comment-form">
+      <textarea
+        ref={ref}
+        className="comment-input"
+        placeholder="Add a comment…"
+        rows={3}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submit();
+        }}
+        disabled={saving}
+      />
+      {error && <p className="error small">{error}</p>}
+      <div className="comment-actions">
+        <span className="muted small">Ctrl+Enter to send</span>
+        <button onClick={submit} disabled={saving || !note.trim()}>
+          {saving ? "Sending…" : "Add comment"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AssignDropdown({
+  number,
+  current,
+  team,
+  onDone,
+}: {
+  number: string;
+  current: string | null;
+  team: TeamInfo;
+  onDone: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  const change = async (val: string) => {
+    const assignedTo = val === "__unassigned" ? null : val;
+    if (assignedTo === current) return;
+    setSaving(true);
+    try {
+      await api.assignTicket(number, assignedTo);
+      onDone();
+    } catch {
+      /* optimistic UI: reload will correct */
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <select
+      className="inline-select"
+      value={current ?? "__unassigned"}
+      onChange={(e) => change(e.target.value)}
+      disabled={saving || !team.writable}
+      title={team.writable ? "Reassign" : "Source is read-only"}
+    >
+      <option value="__unassigned">Unassigned</option>
+      {team.members.map((m) => (
+        <option key={m} value={m}>{m}</option>
+      ))}
+    </select>
+  );
+}
+
+function StatusDropdown({
+  number,
+  current,
+  writable,
+  onDone,
+}: {
+  number: string;
+  current: TicketStatus;
+  writable: boolean;
+  onDone: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  const change = async (val: string) => {
+    if (val === current) return;
+    setSaving(true);
+    try {
+      await api.updateStatus(number, val, CURRENT_USER);
+      onDone();
+    } catch {
+      /* reload will correct */
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <select
+      className="inline-select"
+      value={current}
+      onChange={(e) => change(e.target.value)}
+      disabled={saving || !writable}
+      title={writable ? "Change status" : "Source is read-only"}
+    >
+      {STATUSES.map((s) => (
+        <option key={s} value={s}>{statusLabel(s)}</option>
+      ))}
+    </select>
+  );
+}
 
 export function TicketDetail({
   number,
   servicenowUrl,
   onClose,
+  onMutate,
 }: {
   number: string;
   servicenowUrl: string | null;
   onClose: () => void;
+  onMutate?: () => void;
 }) {
-  const { data: t, error } = usePolling(() => api.ticket(number), [number]);
+  const { data: t, error, reload } = usePolling(() => api.ticket(number), [number]);
+  const { data: team } = usePolling(() => api.team(), []);
   const snLink = servicenowUrl ? serviceNowLink(servicenowUrl, number) : null;
 
   useEffect(() => {
@@ -23,6 +158,13 @@ export function TicketDetail({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  const afterWrite = () => {
+    void reload();
+    onMutate?.();
+  };
+
+  const writable = team?.writable ?? false;
 
   return (
     <>
@@ -50,7 +192,11 @@ export function TicketDetail({
             <h3>{t.shortDescription}</h3>
             <div className="badges">
               <PriorityBadge p={t.priority} />
-              <StatusBadge s={t.status} />
+              {writable ? (
+                <StatusDropdown number={number} current={t.status} writable={writable} onDone={afterWrite} />
+              ) : (
+                <StatusBadge s={t.status} />
+              )}
               <SlaBadge s={t.sla} />
               {t.stale && <span className="badge sla-AT_RISK">No update 48h+</span>}
             </div>
@@ -75,7 +221,14 @@ export function TicketDetail({
             </section>
 
             <dl className="facts">
-              <dt>Owner</dt><dd>{t.assignedTo ?? "Unassigned"}</dd>
+              <dt>Owner</dt>
+              <dd>
+                {team && writable ? (
+                  <AssignDropdown number={number} current={t.assignedTo} team={team} onDone={afterWrite} />
+                ) : (
+                  t.assignedTo ?? "Unassigned"
+                )}
+              </dd>
               <dt>Group</dt><dd>{t.assignmentGroup ?? "—"}</dd>
               <dt>Requested by</dt><dd>{t.requestedBy ?? "—"}</dd>
               <dt>Created</dt><dd>{fmt(t.createdAt)} <span className="muted">({formatDuration(t.ageHours)} ago)</span></dd>
@@ -117,6 +270,7 @@ export function TicketDetail({
 
             <section>
               <h4>Activity</h4>
+              {writable && <CommentForm number={number} onDone={afterWrite} />}
               {t.updates.length ? (
                 <ol className="timeline">
                   {[...t.updates].reverse().map((u, i) => (

@@ -66,19 +66,19 @@ A dashboard connected to live ServiceNow data that the team can act on — comme
 ### Comments and assignments (FR-6.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-6.1 | Add a comment (work note or customer-visible) to a ticket from the detail panel | ⏳ |
+| FR-6.1 | Add a comment (work note or customer-visible) to a ticket from the detail panel | ✅ (mock source; ServiceNow pending live access) |
 | FR-6.2 | Edit the most recent comment if it was posted by the current user | ⏳ |
-| FR-6.3 | Assign or reassign a ticket to a team member from a dropdown in the detail panel | ⏳ |
-| FR-6.4 | Update ticket status (e.g. In Progress → On Hold) from the detail panel | ⏳ |
-| FR-6.5 | All write-back operations update ServiceNow in real time and refresh the local cache | ⏳ |
-| FR-6.6 | Optimistic UI: show the change immediately, roll back if the ServiceNow write fails | ⏳ |
+| FR-6.3 | Assign or reassign a ticket to a team member from a dropdown in the detail panel | ✅ (mock source; ServiceNow pending live access) |
+| FR-6.4 | Update ticket status (e.g. In Progress → On Hold) from the detail panel | ✅ (mock source; ServiceNow pending live access) |
+| FR-6.5 | All write-back operations update ServiceNow in real time and refresh the local cache | ✅ (write-through to source + cache reload) |
+| FR-6.6 | Optimistic UI: show the change immediately, roll back if the ServiceNow write fails | ✅ |
 
 ### Advanced export (FR-7.x)
 | ID | Requirement | Status |
 |---|---|---|
 | FR-7.1 | Export the current filtered/sorted ticket list as CSV (already in Phase 1) | ✅ |
-| FR-7.2 | Export as Excel (.xlsx) with the same filters applied | ⏳ |
-| FR-7.3 | Column picker: choose which columns to include in the export | ⏳ |
+| FR-7.2 | Export as Excel (.xlsx) with the same filters applied | ✅ |
+| FR-7.3 | Column picker: choose which columns to include in the export | ✅ |
 | FR-7.4 | Export directly from the dashboard view (summary data) as well as the ticket list | ⏳ |
 
 ### Authentication and SSO (FR-8.x)
@@ -116,16 +116,18 @@ Phase 2 adds:
 
 ### New API endpoints
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/tickets/:number/comments` | Add a comment to a ticket |
-| PUT | `/api/tickets/:number/comments/:id` | Edit own comment |
-| PUT | `/api/tickets/:number/assign` | Reassign a ticket |
-| PUT | `/api/tickets/:number/status` | Update ticket status |
-| GET | `/api/tickets.xlsx` | Export filtered list as Excel |
-| GET | `/api/auth/login` | Initiate SSO flow |
-| GET | `/api/auth/callback` | SSO callback |
-| POST | `/api/auth/logout` | End session |
+| Method | Path | Purpose | Status |
+|---|---|---|---|
+| POST | `/api/tickets/:number/comments` | Add a comment to a ticket | ✅ |
+| PUT | `/api/tickets/:number/comments/:id` | Edit own comment | ⏳ |
+| PUT | `/api/tickets/:number/assign` | Reassign a ticket | ✅ |
+| PUT | `/api/tickets/:number/status` | Update ticket status | ✅ |
+| GET | `/api/tickets.xlsx` | Export filtered list as Excel (with column selection via `?columns=`) | ✅ |
+| GET | `/api/export-columns` | Available columns for export column picker | ✅ |
+| GET | `/api/team` | Team members and writable flag | ✅ |
+| GET | `/api/auth/login` | Initiate SSO flow | ⏳ |
+| GET | `/api/auth/callback` | SSO callback | ⏳ |
+| POST | `/api/auth/logout` | End session | ⏳ |
 
 ---
 

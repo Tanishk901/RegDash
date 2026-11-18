@@ -3,6 +3,7 @@ import { z } from "zod";
 import { PRIORITIES, STATUSES, toView, type TicketView } from "@regdash/shared";
 import type { TicketStore } from "../lib/store";
 import { ticketsToCsv } from "../lib/csv";
+import { ALL_EXPORT_COLUMNS, ticketsToXlsx } from "../lib/xlsx";
 import { applyFilters, sortViews, summarize } from "../lib/query";
 import { MAX_UPLOAD_MB, UploadError, XLSX_MIME, type TrackerUpload } from "../lib/upload";
 
@@ -118,10 +119,82 @@ export function ticketRoutes(store: TicketStore, { now = () => new Date(), servi
       .send(ticketsToCsv(items));
   });
 
+  /** Same filters as /tickets, as an Excel download with optional column selection. */
+  r.get("/tickets.xlsx", async (req, res, next) => {
+    const items = list(req, res);
+    if (!items) return;
+    const cols = typeof req.query.columns === "string"
+      ? req.query.columns.split(",").filter(Boolean)
+      : undefined;
+    try {
+      const buf = await ticketsToXlsx(items, cols);
+      const stamp = now().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+      res
+        .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        .attachment(`regdash-tickets-${stamp}.xlsx`)
+        .send(buf);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  r.get("/export-columns", (_req, res) => {
+    res.json(ALL_EXPORT_COLUMNS.map((c) => ({ key: c.key, header: c.header })));
+  });
+
+  r.get("/team", (_req, res) => {
+    res.json({ members: store.teamMembers(), writable: store.writable });
+  });
+
   r.get("/tickets/:number", (req, res) => {
     const t = store.get(req.params.number);
     if (!t) return res.status(404).json({ error: `Ticket ${req.params.number} not found` });
     res.json(toView(t, now()));
+  });
+
+  r.post("/tickets/:number/comments", async (req, res, next) => {
+    if (!store.writable) return res.status(403).json({ error: "Data source is read-only" });
+    const body = z.object({ note: z.string().min(1).max(4000), by: z.string().min(1).max(200) }).safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: body.error.flatten().fieldErrors });
+    try {
+      await store.addComment(req.params.number, body.data.note, body.data.by);
+      const t = store.get(req.params.number);
+      res.json(t ? toView(t, now()) : { ok: true });
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) return res.status(404).json({ error: err.message });
+      next(err);
+    }
+  });
+
+  r.put("/tickets/:number/assign", async (req, res, next) => {
+    if (!store.writable) return res.status(403).json({ error: "Data source is read-only" });
+    const body = z.object({ assignedTo: z.string().max(200).nullable() }).safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: body.error.flatten().fieldErrors });
+    try {
+      await store.updateAssignment(req.params.number, body.data.assignedTo);
+      const t = store.get(req.params.number);
+      res.json(t ? toView(t, now()) : { ok: true });
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) return res.status(404).json({ error: err.message });
+      next(err);
+    }
+  });
+
+  r.put("/tickets/:number/status", async (req, res, next) => {
+    if (!store.writable) return res.status(403).json({ error: "Data source is read-only" });
+    const body = z.object({
+      status: z.enum(STATUSES as [string, ...string[]]),
+      by: z.string().min(1).max(200),
+    }).safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: body.error.flatten().fieldErrors });
+    try {
+      await store.updateStatus(req.params.number, body.data.status as never, body.data.by);
+      const t = store.get(req.params.number);
+      res.json(t ? toView(t, now()) : { ok: true });
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) return res.status(404).json({ error: err.message });
+      next(err);
+    }
   });
 
   return r;

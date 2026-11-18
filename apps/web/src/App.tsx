@@ -13,6 +13,7 @@ import {
 } from "react-router-dom";
 import type { DashboardSummary } from "@regdash/shared";
 import { ExcelUpload } from "./components/ExcelUpload";
+import { ExportMenu } from "./components/ExportMenu";
 import { Filters } from "./components/Filters";
 import { Gauges } from "./components/Gauges";
 import { Logo, RefreshIcon } from "./components/Icons";
@@ -30,6 +31,7 @@ interface Shared {
   summary: DashboardSummary | null;
   health: Health | null;
   apiError: string | null;
+  reloadAll: () => Promise<void>;
 }
 
 const useShared = () => useOutletContext<Shared>();
@@ -91,7 +93,7 @@ function Shell() {
 
   const h = health.data;
   const last = summary.data?.lastRefreshedAt;
-  const shared: Shared = { summary: summary.data, health: h, apiError: summary.error };
+  const shared: Shared = { summary: summary.data, health: h, apiError: summary.error, reloadAll: async () => { await reloadAll(); } };
 
   return (
     <>
@@ -210,7 +212,7 @@ function DashboardPage() {
 }
 
 function TicketsPage() {
-  const { summary, health, apiError } = useShared();
+  const { summary, health, apiError, reloadAll } = useShared();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -245,16 +247,19 @@ function TicketsPage() {
         <span>
           {list.data ? `${list.data.total} ticket${list.data.total === 1 ? "" : "s"}` : list.loading ? "Loading…" : ""}
         </span>
-        {!!list.data?.total && (
-          <a className="button" href={api.ticketsCsvUrl(params)} download>
-            Export CSV
-          </a>
-        )}
+        {!!list.data?.total && <ExportMenu params={params} />}
       </div>
 
       {list.data && <TicketTable items={list.data.items} selected={number} onOpen={open} />}
 
-      {number && <TicketDetail number={number} servicenowUrl={health?.servicenowUrl ?? null} onClose={close} />}
+      {number && (
+        <TicketDetail
+          number={number}
+          servicenowUrl={health?.servicenowUrl ?? null}
+          onClose={close}
+          onMutate={() => { void list.reload(); void reloadAll(); }}
+        />
+      )}
     </>
   );
 }

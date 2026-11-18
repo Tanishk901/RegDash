@@ -68,14 +68,30 @@ async function send<T>(path: string, init: RequestInit): Promise<T> {
   return body as T;
 }
 
+export interface TeamInfo {
+  members: string[];
+  writable: boolean;
+}
+
+export interface ExportColumn {
+  key: string;
+  header: string;
+}
+
 export const api = {
   summary: () => get<DashboardSummary>("/api/summary"),
   tickets: (params: URLSearchParams) => get<TicketList>(`/api/tickets?${params}`),
-  /** Download URL for the same filtered list as CSV. */
   ticketsCsvUrl: (params: URLSearchParams) => `/api/tickets.csv?${params}`,
+  ticketsXlsxUrl: (params: URLSearchParams, columns?: string[]) => {
+    const p = new URLSearchParams(params);
+    if (columns?.length) p.set("columns", columns.join(","));
+    return `/api/tickets.xlsx?${p}`;
+  },
   ticket: (number: string) => get<TicketView>(`/api/tickets/${encodeURIComponent(number)}`),
   health: () => get<Health>("/api/health"),
   refresh: () => fetch("/api/refresh", { method: "POST" }),
+  team: () => get<TeamInfo>("/api/team"),
+  exportColumns: () => get<ExportColumn[]>("/api/export-columns"),
   upload: (file: File) =>
     send<UploadResult>(`/api/upload?fileName=${encodeURIComponent(file.name)}`, {
       method: "POST",
@@ -83,6 +99,25 @@ export const api = {
       body: file,
     }),
   removeUpload: () => send<RemoveUploadResult>("/api/upload", { method: "DELETE" }),
+
+  addComment: (number: string, note: string, by: string) =>
+    send<TicketView>(`/api/tickets/${encodeURIComponent(number)}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note, by }),
+    }),
+  assignTicket: (number: string, assignedTo: string | null) =>
+    send<TicketView>(`/api/tickets/${encodeURIComponent(number)}/assign`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assignedTo }),
+    }),
+  updateStatus: (number: string, status: string, by: string) =>
+    send<TicketView>(`/api/tickets/${encodeURIComponent(number)}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, by }),
+    }),
 };
 
 /** Fetch + poll. Keeps showing the previous data while a reload is in flight. */

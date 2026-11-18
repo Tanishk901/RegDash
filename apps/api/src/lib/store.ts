@@ -1,5 +1,5 @@
-import type { Ticket } from "@regdash/shared";
-import type { SourceResult, TicketSource } from "../sources/TicketSource";
+import type { Ticket, TicketStatus } from "@regdash/shared";
+import { isWritable, type SourceResult, type TicketSource, type WritableTicketSource } from "../sources/TicketSource";
 
 /**
  * In-memory cache of the latest successful pull. If a refresh fails, the
@@ -78,5 +78,31 @@ export class TicketStore {
   stop() {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
+  }
+
+  get writable(): boolean {
+    return isWritable(this.source);
+  }
+
+  private writableSource(): WritableTicketSource {
+    if (!isWritable(this.source)) throw new Error("Current data source is read-only");
+    return this.source;
+  }
+
+  async addComment(number: string, note: string, by: string): Promise<void> {
+    await this.writableSource().addComment(number, note, by);
+  }
+
+  async updateAssignment(number: string, assignedTo: string | null): Promise<void> {
+    await this.writableSource().updateAssignment(number, assignedTo);
+  }
+
+  async updateStatus(number: string, status: TicketStatus, by: string): Promise<void> {
+    await this.writableSource().updateStatus(number, status, by);
+  }
+
+  teamMembers(): string[] {
+    if (!isWritable(this.source)) return [];
+    return this.source.teamMembers();
   }
 }

@@ -1,6 +1,6 @@
 import { DEFAULT_SLA_HOURS } from "@regdash/shared";
 import type { Priority, Ticket, TicketStatus, TicketType, TicketUpdate } from "@regdash/shared";
-import type { SourceResult, TicketSource } from "./TicketSource";
+import type { SourceResult, WritableTicketSource } from "./TicketSource";
 
 /**
  * Realistic fake RegCreate tickets. Deterministic (seeded) so screenshots and
@@ -133,9 +133,53 @@ export function generateMockTickets(count = 42, seed = 20260927, now = new Date(
   return tickets;
 }
 
-export class MockSource implements TicketSource {
+export class MockSource implements WritableTicketSource {
   readonly name = "mock" as const;
+  private tickets: Ticket[] | null = null;
+
+  private ensure(): Ticket[] {
+    this.tickets ??= generateMockTickets();
+    return this.tickets;
+  }
+
+  private find(number: string): Ticket {
+    const t = this.ensure().find((t) => t.number === number.toUpperCase());
+    if (!t) throw new Error(`Ticket ${number} not found`);
+    return t;
+  }
+
   async fetchTickets(): Promise<SourceResult> {
-    return { tickets: generateMockTickets(), rejected: [] };
+    return { tickets: this.ensure(), rejected: [] };
+  }
+
+  async addComment(number: string, note: string, by: string): Promise<void> {
+    const t = this.find(number);
+    t.updates.push({ at: new Date().toISOString(), by, note });
+    t.updatedAt = new Date().toISOString();
+  }
+
+  async updateAssignment(number: string, assignedTo: string | null): Promise<void> {
+    const t = this.find(number);
+    t.assignedTo = assignedTo;
+    t.updatedAt = new Date().toISOString();
+  }
+
+  async updateStatus(number: string, status: TicketStatus, by: string): Promise<void> {
+    const t = this.find(number);
+    const prev = t.status;
+    t.status = status;
+    if (status === "ON_HOLD" && prev !== "ON_HOLD") {
+      t.pendingSince = new Date().toISOString();
+    } else if (status !== "ON_HOLD") {
+      t.pendingSince = null;
+      t.pendingOwner = null;
+      t.blocker = null;
+    }
+    t.updates.push({ at: new Date().toISOString(), by, note: `Status changed: ${prev} → ${status}` });
+    t.updatedAt = new Date().toISOString();
+  }
+
+  teamMembers(): string[] {
+    return ENGINEERS.filter((e): e is string => e !== null);
   }
 }

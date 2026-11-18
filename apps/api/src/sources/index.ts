@@ -25,4 +25,5 @@ export function createSource(cfg: Config): TicketSource {
   }
 }
 
-export type { TicketSource } from "./TicketSource";
+export type { TicketSource, WritableTicketSource } from "./TicketSource";
+export { isWritable } from "./TicketSource";
