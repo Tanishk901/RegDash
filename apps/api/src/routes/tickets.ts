@@ -5,6 +5,7 @@ import type { TicketStore } from "../lib/store";
 import { ticketsToCsv } from "../lib/csv";
 import { ALL_EXPORT_COLUMNS, ticketsToXlsx } from "../lib/xlsx";
 import { applyFilters, sortViews, summarize } from "../lib/query";
+import { summaryCsv, summaryXlsx } from "../lib/summary-export";
 import { MAX_UPLOAD_MB, UploadError, XLSX_MIME, type TrackerUpload } from "../lib/upload";
 
 const csv = <T extends [string, ...string[]]>(values: T) =>
@@ -100,6 +101,28 @@ export function ticketRoutes(store: TicketStore, { now = () => new Date(), servi
 
   r.get("/summary", (_req, res) => {
     res.json(summarize(store.all(), now(), { lastRefreshedAt: store.lastRefreshedAt, source: store.source.name }));
+  });
+
+  r.get("/summary.csv", (_req, res) => {
+    const s = summarize(store.all(), now(), { lastRefreshedAt: store.lastRefreshedAt, source: store.source.name });
+    const stamp = now().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+    res
+      .type("text/csv; charset=utf-8")
+      .attachment(`regdash-summary-${stamp}.csv`)
+      .send(summaryCsv(s));
+  });
+
+  r.get("/summary.xlsx", async (_req, res, next) => {
+    try {
+      const s = summarize(store.all(), now(), { lastRefreshedAt: store.lastRefreshedAt, source: store.source.name });
+      const stamp = now().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+      res
+        .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        .attachment(`regdash-summary-${stamp}.xlsx`)
+        .send(await summaryXlsx(s));
+    } catch (err) {
+      next(err);
+    }
   });
 
   r.get("/tickets", (req, res) => {
