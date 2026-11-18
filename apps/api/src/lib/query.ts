@@ -86,7 +86,7 @@ export function summarize(
     const name = t.assignedTo ?? UNASSIGNED;
     let w = owners.get(name);
     if (!w) {
-      w = { owner: name, count: 0, byPriority: zeroByPriority(), breached: 0, atRisk: 0, onHold: 0, stale: 0, estimatedHours: 0 };
+      w = { owner: name, count: 0, byPriority: zeroByPriority(), breached: 0, atRisk: 0, onHold: 0, stale: 0, actionable: 0, estimatedHours: 0 };
       owners.set(name, w);
     }
     w.count++;
@@ -94,6 +94,7 @@ export function summarize(
     if (t.sla === "BREACHED") w.breached++;
     if (t.sla === "AT_RISK") w.atRisk++;
     if (t.status === "ON_HOLD") w.onHold++;
+    if (t.status !== "ON_HOLD") w.actionable++;
     if (t.stale) w.stale++;
     w.estimatedHours += t.estimatedHours ?? 0;
   }

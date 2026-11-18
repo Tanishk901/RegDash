@@ -124,6 +124,7 @@ export interface OwnerWorkload {
   atRisk: number;
   onHold: number;
   stale: number;
+  actionable: number;
   /** Sum of estimatedHours over open tickets that have one. */
   estimatedHours: number;
 }

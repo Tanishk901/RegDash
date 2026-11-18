@@ -16,6 +16,7 @@ export function Workload({ rows, onPick }: { rows: OwnerWorkload[]; onPick: (own
             {PRIORITIES.map((p) => (
               <th key={p} className="num">{p}</th>
             ))}
+            <th className="num" title="Tickets not on hold — owner can act now">Actionable</th>
             <th className="num">Breached</th>
             <th className="num">At risk</th>
             <th className="num">On hold</th>
@@ -43,6 +44,7 @@ export function Workload({ rows, onPick }: { rows: OwnerWorkload[]; onPick: (own
                 {PRIORITIES.map((p) => (
                   <td key={p} className={`num ${w.byPriority[p] ? "" : "muted"}`}>{w.byPriority[p]}</td>
                 ))}
+                <td className={`num ${w.actionable ? "" : "muted"}`}>{w.actionable}</td>
                 <td className={`num ${w.breached ? "danger" : "muted"}`}>{w.breached}</td>
                 <td className={`num ${w.atRisk ? "warn" : "muted"}`}>{w.atRisk}</td>
                 <td className={`num ${w.onHold ? "" : "muted"}`}>{w.onHold}</td>
