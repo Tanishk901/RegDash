@@ -1,4 +1,4 @@
-import { PRIORITIES, STATUSES } from "@regdash/shared";
+import { APPLICATION_CODES, ENVIRONMENTS, PRIORITIES, STATUSES } from "@regdash/shared";
 import { statusLabel } from "./Badges";
 
 export function Filters({
@@ -50,6 +50,18 @@ export function Filters({
           <option key={o} value={o}>{o}</option>
         ))}
       </select>
+      <select className={set("application")} value={val("application")} onChange={(e) => onChange({ application: e.target.value || null })} aria-label="Application">
+        <option value="">All applications</option>
+        {APPLICATION_CODES.map((a) => (
+          <option key={a} value={a}>{a}</option>
+        ))}
+      </select>
+      <select className={set("environment")} value={val("environment")} onChange={(e) => onChange({ environment: e.target.value || null })} aria-label="Environment">
+        <option value="">All environments</option>
+        {ENVIRONMENTS.map((e) => (
+          <option key={e} value={e}>{e}</option>
+        ))}
+      </select>
       <select className={set("sla")} value={val("sla")} onChange={(e) => onChange({ sla: e.target.value || null })} aria-label="SLA">
         <option value="">Any SLA</option>
         <option value="BREACHED">SLA breached</option>
@@ -80,7 +92,7 @@ export function Filters({
         Include closed
       </label>
       {active && (
-        <button className="link" onClick={() => onChange({ q: null, type: null, status: null, priority: null, assignedTo: null, sla: null, stale: null, includeClosed: null })}>
+        <button className="link" onClick={() => onChange({ q: null, type: null, status: null, priority: null, assignedTo: null, application: null, environment: null, sla: null, stale: null, includeClosed: null })}>
           Clear filters
         </button>
       )}
