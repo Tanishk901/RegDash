@@ -2,7 +2,9 @@ import type { Ticket, TicketType } from "@regdash/shared";
 import type { SourceResult, TicketSource } from "./TicketSource";
 import {
   extractTagged,
+  normalizeApplication,
   normalizeDate,
+  normalizeEnvironment,
   normalizePriority,
   normalizeStatus,
   normalizeText,
@@ -29,6 +31,7 @@ export const FIELDS = [
   "number", "short_description", "description", "state", "priority",
   "assigned_to", "assignment_group", "opened_by", "caller_id", "requested_for",
   "opened_at", "sys_updated_on", "hold_reason", "due_date", "comments_and_work_notes",
+  "cmdb_ci", "service_offering",
 ].join(",");
 
 const PAGE_SIZE = 500;
@@ -101,6 +104,10 @@ export function mapRecord(r: SnRecord, type: TicketType): { ticket?: Ticket; rea
       itemCount: null,
       updates: updates.reverse(), // oldest → newest for the timeline
       source: "servicenow",
+      application: normalizeApplication(d(r, "cmdb_ci")),
+      environment: normalizeEnvironment(d(r, "cmdb_ci")),
+      configurationItem: normalizeText(d(r, "cmdb_ci")),
+      serviceOffering: normalizeText(d(r, "service_offering")),
     },
   };
 }
