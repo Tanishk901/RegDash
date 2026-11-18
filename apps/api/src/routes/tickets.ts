@@ -1,6 +1,6 @@
 import express, { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { PRIORITIES, STATUSES, toView, type TicketView } from "@regdash/shared";
+import { APPLICATION_CODES, ENVIRONMENTS, PRIORITIES, STATUSES, toView, type TicketView } from "@regdash/shared";
 import type { TicketStore } from "../lib/store";
 import { ticketsToCsv } from "../lib/csv";
 import { ALL_EXPORT_COLUMNS, ticketsToXlsx } from "../lib/xlsx";
@@ -22,6 +22,8 @@ const ListQuery = z.object({
   q: z.string().max(200).optional(),
   stale: z.enum(["true", "false"]).transform((v) => v === "true").optional(),
   includeClosed: z.enum(["true", "false"]).transform((v) => v === "true").optional(),
+  application: z.enum(APPLICATION_CODES as [string, ...string[]]).optional(),
+  environment: z.enum(ENVIRONMENTS as [string, ...string[]]).optional(),
   sort: z.enum(["sla", "priority", "age", "updated"]).default("sla"),
   dir: z.enum(["asc", "desc"]).default("asc"),
 });
