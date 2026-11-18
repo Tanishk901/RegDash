@@ -1,4 +1,4 @@
-import type { Priority, SlaState, TicketStatus, TicketType } from "@regdash/shared";
+import type { Priority, SlaState, TicketSlaDetail, TicketStatus, TicketType } from "@regdash/shared";
 
 const STATUS_LABEL: Record<TicketStatus, string> = {
   NEW: "New",
@@ -26,4 +26,18 @@ export function SlaBadge({ s }: { s: SlaState }) {
 
 export function TypeTag({ t }: { t: TicketType }) {
   return <span className={`type type-${t}`}>{t === "INCIDENT" ? "INC" : "SR"}</span>;
+}
+
+const KIND_LABEL = { response: "Resp", resolution: "Resol" } as const;
+
+export function SlaDetailBadge({ detail }: { detail: TicketSlaDetail }) {
+  if (!detail.available) {
+    return <span className="badge sla-detail sla-detail-na">{KIND_LABEL[detail.kind]}: N/A</span>;
+  }
+  const hours = detail.targetHours != null ? `${detail.targetHours}h` : "—";
+  return (
+    <span className={`badge sla-detail sla-detail-${detail.state}`} title={`${detail.kind} SLA: ${SLA_LABEL[detail.state]} (target ${hours})`}>
+      {KIND_LABEL[detail.kind]}: {SLA_LABEL[detail.state]}
+    </span>
+  );
 }
