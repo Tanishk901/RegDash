@@ -1,5 +1,5 @@
 import { DEFAULT_SLA_HOURS } from "@regdash/shared";
-import type { Priority, Ticket, TicketStatus, TicketType, TicketUpdate } from "@regdash/shared";
+import type { ApplicationCode, Environment, Priority, Ticket, TicketStatus, TicketType, TicketUpdate } from "@regdash/shared";
 import type { SourceResult, WritableTicketSource } from "./TicketSource";
 
 /**
@@ -59,6 +59,16 @@ function pick<T>(rand: () => number, arr: readonly T[]): T {
 function weightedPriority(rand: () => number): Priority {
   const r = rand();
   return r < 0.08 ? "P1" : r < 0.3 ? "P2" : r < 0.75 ? "P3" : "P4";
+}
+
+function weightedApplication(rand: () => number): ApplicationCode {
+  const r = rand();
+  return r < 0.50 ? "REGCREATE" : r < 0.65 ? "SYMPHONY" : r < 0.78 ? "SONATA" : r < 0.88 ? "GLE" : r < 0.95 ? "CLRR" : "OTHER";
+}
+
+function weightedEnvironment(rand: () => number): Environment {
+  const r = rand();
+  return r < 0.50 ? "PROD" : r < 0.75 ? "QA" : r < 0.92 ? "DEV" : "OTHER";
 }
 
 function weightedStatus(rand: () => number, hasBlocker: boolean): TicketStatus {
@@ -128,6 +138,10 @@ export function generateMockTickets(count = 42, seed = 20260927, now = new Date(
       itemCount,
       updates,
       source: "mock",
+      application: weightedApplication(rand),
+      environment: weightedEnvironment(rand),
+      configurationItem: null,
+      serviceOffering: null,
     });
   }
   return tickets;
