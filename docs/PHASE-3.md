@@ -2,6 +2,7 @@
 
 **Project:** RegDash (RegCreate Operations & Automation Dashboard)
 **Phase:** 3 of 4. Automation
+**Version:** v3.0.0
 **Owner:** Tanishk
 **Status:** Not started. Depends on Phase 2 (live ServiceNow integration, authentication).
 **Last updated:** 18 Nov 2026

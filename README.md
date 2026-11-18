@@ -2,6 +2,7 @@
 
 **The RegCreate support team's open work, in one view.** See what's open, what's breaching, who owns it, what it's waiting on and what happens next.
 
+![v1.0.0](https://img.shields.io/badge/version-1.0.0-blue)
 ![Node 22.9+](https://img.shields.io/badge/Node-22.9%2B-339933?logo=node.js&logoColor=white)
 ![pnpm 10](https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white)
 ![TypeScript 5](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
@@ -277,6 +278,17 @@ flowchart LR
 
 ## Roadmap
 
+### Versioning
+
+Major version = phase. Minor = feature milestones within a phase. Patch = bug fixes.
+
+| Version | Phase | Status |
+|---|---|---|
+| **v1.0.0** | Phase 1 — Visibility (read-only dashboard) | ✅ Released |
+| **v2.0.0** | Phase 2 — Live Data & Collaboration | Planned |
+| **v3.0.0** | Phase 3 — Automation & Custom Views | Planned |
+| **v4.0.0** | Phase 4 — Support Copilot (AI) | Planned |
+
 ```mermaid
 gantt
     title RegDash Phases
@@ -301,7 +313,7 @@ gantt
         Resolution suggestions with sources    :p4b, 2027-08, 2027-11
 ```
 
-### Phase 1 — Read-only Dashboard (current) ✅
+### Phase 1 — Read-only Dashboard · `v1.0.0` ✅
 
 > A React dashboard on mock data or an uploaded Excel tracker, with rule-based keyword detection to accurately identify SRs and Incidents. Built to be **replaceable and implementable for any project**, not just RegCreate.
 
@@ -318,7 +330,7 @@ gantt
 
 Full requirements and design: **[docs/PHASE-1.md](docs/PHASE-1.md)**
 
-### Phase 2 — Live Data and Collaboration
+### Phase 2 — Live Data and Collaboration · `v2.0.0`
 
 > Connect the dashboard to live ServiceNow data, let the team add comments and assign tickets, write back changes, and export any view.
 
@@ -332,7 +344,7 @@ Full requirements and design: **[docs/PHASE-1.md](docs/PHASE-1.md)**
 
 Full requirements and design: **[docs/PHASE-2.md](docs/PHASE-2.md)**
 
-### Phase 3 — Automation and Custom Views
+### Phase 3 — Automation and Custom Views · `v3.0.0`
 
 > Automate routine communication (Outlook, Teams), ingest the shared mailbox, and let users build any dashboard view by picking columns.
 
@@ -345,7 +357,7 @@ Full requirements and design: **[docs/PHASE-2.md](docs/PHASE-2.md)**
 
 Full requirements and design: **[docs/PHASE-3.md](docs/PHASE-3.md)**
 
-### Phase 4 — Support Copilot
+### Phase 4 — Support Copilot · `v4.0.0`
 
 > An AI layer that learns from SOPs and past tickets to help engineers resolve issues faster.
 

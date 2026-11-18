@@ -2,6 +2,7 @@
 
 **Project:** RegDash (RegCreate Operations & Automation Dashboard)
 **Phase:** 4 of 4. AI Copilot
+**Version:** v4.0.0
 **Owner:** Tanishk
 **Status:** Not started. Depends on Phase 2 (live ServiceNow) and Phase 3 (mailbox ingestion, templates).
 **Last updated:** 18 Nov 2026

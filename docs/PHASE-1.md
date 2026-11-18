@@ -2,9 +2,10 @@
 
 **Project:** RegDash (RegCreate Operations & Automation Dashboard)
 **Phase:** 1 of 4. Visibility
+**Version:** v1.0.0
 **Owner:** Tanishk
-**Status:** Scaffold built and running on mock and Excel data. ServiceNow adapter written but not yet tested against a live instance.
-**Last updated:** 27 Sep 2026
+**Status:** ✅ Released. Running on mock and Excel data. ServiceNow adapter written but not yet tested against a live instance.
+**Last updated:** 18 Nov 2026
 
 ---
 
@@ -270,8 +271,8 @@ If the source provides a due date, RegDash uses it. Otherwise it applies **place
 | M5 | Host internally + share the link with the team | Phase 1 complete → start Phase 2 |
 
 ## 12. Phase 1.1 backlog (nice-to-have, after M5)
-- Microsoft Graph download of the SharePoint workbook (FR-4.8)
-- Real SLA data from `task_sla`; `pendingSince` from `sys_audit`
-- Owner workload view (tickets per engineer, by priority)
-- CSV export of the current filtered view
-- "Deep link to ServiceNow" button on each ticket
+- ✅ Owner workload view (tickets per engineer, by priority) — shipped in v1.0.0
+- ✅ CSV export of the current filtered view — shipped in v1.0.0
+- ✅ "Deep link to ServiceNow" button on each ticket — shipped in v1.0.0
+- ➡️ Microsoft Graph download of the SharePoint workbook (FR-4.8) — moved to Phase 2 (v2.0.0)
+- ➡️ Real SLA data from `task_sla`; `pendingSince` from `sys_audit` — moved to Phase 2 (v2.0.0)

@@ -2,6 +2,7 @@
 
 **Project:** RegDash (RegCreate Operations & Automation Dashboard)
 **Phase:** 2 of 4. Live Data & Collaboration
+**Version:** v2.0.0
 **Owner:** Tanishk
 **Status:** Not started. Phase 1 complete; ServiceNow adapter written but not yet tested against a live instance.
 **Last updated:** 18 Nov 2026

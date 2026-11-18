@@ -1,8 +1,8 @@
 {
   "name": "regdash",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "RegDash — RegCreate Operations Dashboard (Phase 1: incident & SR visibility)",
+  "description": "RegDash — RegCreate Operations & Automation Dashboard",
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=22.9"
