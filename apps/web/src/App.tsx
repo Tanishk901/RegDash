@@ -207,6 +207,10 @@ function DashboardPage() {
       <Gauges summary={summary} />
       <div className="section-head">
         <h2>Open work</h2>
+        <div className="export-buttons">
+          <a className="button" href={api.summaryCsvUrl()} download>Summary CSV</a>
+          <a className="button" href={api.summaryXlsxUrl()} download>Summary Excel</a>
+        </div>
       </div>
       <SummaryCards summary={summary} />
     </>

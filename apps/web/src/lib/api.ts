@@ -87,6 +87,8 @@ export const api = {
     if (columns?.length) p.set("columns", columns.join(","));
     return `/api/tickets.xlsx?${p}`;
   },
+  summaryCsvUrl: () => "/api/summary.csv",
+  summaryXlsxUrl: () => "/api/summary.xlsx",
   ticket: (number: string) => get<TicketView>(`/api/tickets/${encodeURIComponent(number)}`),
   health: () => get<Health>("/api/health"),
   refresh: () => fetch("/api/refresh", { method: "POST" }),
