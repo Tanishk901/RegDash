@@ -20,6 +20,7 @@ export function TicketTable({
           <tr>
             <th>Ticket</th>
             <th>Summary</th>
+            <th>App</th>
             <th>Priority</th>
             <th>Status</th>
             <th>SLA</th>
@@ -47,6 +48,7 @@ export function TicketTable({
                 <TypeTag t={t.type} /> {t.number}
               </td>
               <td className="summary">{t.shortDescription}</td>
+              <td className="app">{t.application ?? <span className="muted">—</span>}</td>
               <td><PriorityBadge p={t.priority} /></td>
               <td><StatusBadge s={t.status} /></td>
               <td><SlaBadge s={t.sla} /></td>
