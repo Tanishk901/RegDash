@@ -154,10 +154,11 @@ a.tab.active { color: var(--accent); background: var(--accent-bg); font-weight: 
 .banner ul { margin: 8px 0 0; padding-left: 18px; }
 
 /* ---------- dashboard ---------- */
-.section-head { margin: 28px 0 14px; }
+.section-head { margin: 28px 0 14px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .section-head:first-of-type { margin-top: 6px; }
 .section-head h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
 .section-head p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+.section-head .export-buttons { margin-left: auto; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
 .card {
