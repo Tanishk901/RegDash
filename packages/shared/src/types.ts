@@ -5,6 +5,12 @@
 
 export type TicketType = "INCIDENT" | "SR";
 
+export type ApplicationCode = "REGCREATE" | "SYMPHONY" | "SONATA" | "GLE" | "CLRR" | "OTHER";
+export type Environment = "DEV" | "QA" | "PROD" | "OTHER";
+
+export const APPLICATION_CODES: ApplicationCode[] = ["REGCREATE", "SYMPHONY", "SONATA", "GLE", "CLRR", "OTHER"];
+export const ENVIRONMENTS: Environment[] = ["DEV", "QA", "PROD", "OTHER"];
+
 export type TicketStatus =
   | "NEW"
   | "IN_PROGRESS"
@@ -59,6 +65,11 @@ export interface Ticket {
   updates: TicketUpdate[];
   /** Which source produced this record. */
   source: "mock" | "excel" | "servicenow";
+
+  application: ApplicationCode | null;
+  environment: Environment | null;
+  configurationItem: string | null;
+  serviceOffering: string | null;
 }
 
 /** How a spreadsheet was understood, so the assumptions can be checked rather than trusted. */
@@ -79,11 +90,22 @@ export interface SourceReading {
   typeConflicts: { number: string; column: TicketType; prefix: TicketType }[];
 }
 
+/** Detail for one SLA clock (response or resolution). */
+export interface TicketSlaDetail {
+  kind: "response" | "resolution";
+  state: SlaState;
+  targetHours: number | null;
+  elapsedHours: number;
+  available: boolean;
+}
+
 /** Ticket plus fields the API derives at read time. */
 export interface TicketView extends Ticket {
   ageHours: number;
   hoursSinceUpdate: number;
   sla: SlaState;
+  responseSla: TicketSlaDetail | null;
+  resolutionSla: TicketSlaDetail | null;
   /** true when no update in STALE_AFTER_HOURS */
   stale: boolean;
   /** Hours in the current pending state; null unless ON_HOLD with a known pendingSince. */
@@ -115,6 +137,8 @@ export interface TicketFilters {
   stale?: boolean;
   q?: string; // free text over number / description / owner
   includeClosed?: boolean;
+  application?: ApplicationCode;
+  environment?: Environment;
 }
 
 export type SortKey = "priority" | "age" | "updated" | "sla";
@@ -130,6 +154,8 @@ export interface DashboardSummary {
   stale: number;
   onHold: number;
   byOwner: OwnerWorkload[];
+  byApplication: Record<ApplicationCode, number>;
+  byEnvironment: Record<Environment, number>;
   lastRefreshedAt: string | null;
   source: Ticket["source"];
 }
