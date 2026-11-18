@@ -1,4 +1,32 @@
-import type { Priority, SlaState, Ticket, TicketView } from "./types";
+import type { Priority, SlaState, Ticket, TicketSlaDetail, TicketView } from "./types";
+
+// ── SLA Policy Model ──────────────────────────────────────────────────
+
+export type SlaKind = "response" | "resolution";
+
+export interface SlaPolicyEntry {
+  kind: SlaKind;
+  priority: Priority;
+  targetHours: number;
+}
+
+export interface SlaPolicy {
+  name: string;
+  entries: SlaPolicyEntry[];
+}
+
+function buildPolicy(
+  name: string,
+  response: Record<Priority, number>,
+  resolution: Record<Priority, number>,
+): SlaPolicy {
+  const entries: SlaPolicyEntry[] = [];
+  for (const p of ["P1", "P2", "P3", "P4"] as Priority[]) {
+    entries.push({ kind: "response", priority: p, targetHours: response[p] });
+    entries.push({ kind: "resolution", priority: p, targetHours: resolution[p] });
+  }
+  return { name, entries };
+}
 
 // Support model: Silver, 16×5 (16 h/day, Mon–Fri).
 // P1/P2 clock: 16×5 support window.  P3/P4 clock: business days (×16 h).
@@ -16,6 +44,20 @@ export const DEFAULT_SLA_HOURS: Record<Priority, number> = {
   P3: 80,    // 5 business days (5 × 16 h)
   P4: 128,   // 8 business days (8 × 16 h)
 };
+
+const DEFAULT_POLICY = buildPolicy("Silver 16×5", RESPONSE_SLA_HOURS, DEFAULT_SLA_HOURS);
+
+export function getDefaultPolicy(): SlaPolicy {
+  return DEFAULT_POLICY;
+}
+
+export function findPolicy(
+  policy: SlaPolicy,
+  kind: SlaKind,
+  priority: Priority,
+): SlaPolicyEntry | undefined {
+  return policy.entries.find((e) => e.kind === kind && e.priority === priority);
+}
 
 /** Fraction of the SLA window after which a ticket counts as "at risk". */
 export const AT_RISK_THRESHOLD = 0.75;
@@ -52,6 +94,44 @@ export function computeSla(
   const window = due - created;
   if (window > 0 && (nowMs - created) / window >= AT_RISK_THRESHOLD) return "AT_RISK";
   return "OK";
+}
+
+export function computeSlaDetail(
+  ticket: Pick<Ticket, "createdAt" | "priority" | "status">,
+  kind: SlaKind,
+  policy: SlaPolicy = DEFAULT_POLICY,
+  now: Date = new Date(),
+): TicketSlaDetail {
+  const entry = findPolicy(policy, kind, ticket.priority);
+  if (!entry) {
+    return { kind, state: "OK", targetHours: null, elapsedHours: hoursBetween(ticket.createdAt, now), available: false };
+  }
+  const elapsed = hoursBetween(ticket.createdAt, now);
+  let state: SlaState;
+  if (ticket.status === "RESOLVED" || ticket.status === "CLOSED") {
+    state = "OK";
+  } else if (ticket.status === "ON_HOLD") {
+    state = "PAUSED";
+  } else if (elapsed >= entry.targetHours) {
+    state = "BREACHED";
+  } else if (entry.targetHours > 0 && elapsed / entry.targetHours >= AT_RISK_THRESHOLD) {
+    state = "AT_RISK";
+  } else {
+    state = "OK";
+  }
+  return { kind, state, targetHours: entry.targetHours, elapsedHours: elapsed, available: true };
+}
+
+export function computeDetailedSla(
+  ticket: Pick<Ticket, "createdAt" | "priority" | "slaDueAt" | "status">,
+  policy: SlaPolicy = DEFAULT_POLICY,
+  now: Date = new Date(),
+): { sla: SlaState; response: TicketSlaDetail; resolution: TicketSlaDetail } {
+  const response = computeSlaDetail(ticket, "response", policy, now);
+  const resolution = computeSlaDetail(ticket, "resolution", policy, now);
+  const SLA_SEVERITY: Record<SlaState, number> = { BREACHED: 3, AT_RISK: 2, PAUSED: 1, OK: 0 };
+  const sla = SLA_SEVERITY[response.state] >= SLA_SEVERITY[resolution.state] ? response.state : resolution.state;
+  return { sla, response, resolution };
 }
 
 export function toView(ticket: Ticket, now: Date = new Date()): TicketView {
