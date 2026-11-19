@@ -67,7 +67,7 @@ export class KnowledgeIndexer {
       source: "sop" as const,
       title: s.title,
       content: s.content,
-      vector: vectors[i],
+      vector: vectors[i]!,
       metadata: { type: "sop" },
     }));
   }
@@ -86,8 +86,8 @@ export class KnowledgeIndexer {
       id: `ticket-${t.number}`,
       source: "ticket" as const,
       title: `${t.number}: ${t.shortDescription}`,
-      content: texts[i],
-      vector: vectors[i],
+      content: texts[i]!,
+      vector: vectors[i]!,
       metadata: { number: t.number, type: t.type, priority: t.priority },
     }));
   }

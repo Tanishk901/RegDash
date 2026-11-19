@@ -19,6 +19,10 @@ const Env = z.object({
   SERVICENOW_PASSWORD: z.string().optional(),
   SERVICENOW_ASSIGNMENT_GROUP: z.string().optional(),
   SERVICENOW_TEAM_MEMBERS: z.string().optional(),
+
+  KNOWLEDGE_PATH: z.string().default("../../data/knowledge.json"),
+  LLM_PROVIDER: z.enum(["mock"]).default("mock"),
+  EMBEDDING_PROVIDER: z.enum(["mock"]).default("mock"),
 });
 
 export type Config = z.infer<typeof Env>;
