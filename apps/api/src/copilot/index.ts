@@ -1,4 +1,7 @@
 export type { LlmProvider, LlmAnswer, LlmCitation } from "./LlmProvider";
 export type { EmbeddingProvider } from "./EmbeddingProvider";
+export type { KnowledgeChunk, KnowledgeSearchResult, KnowledgeStore, KnowledgeStoreStatus } from "./KnowledgeStore";
 export { MockLlmProvider } from "./MockLlmProvider";
 export { MockEmbeddingProvider } from "./MockEmbeddingProvider";
+export { InMemoryKnowledgeStore } from "./InMemoryKnowledgeStore";
+export { KnowledgeIndexer } from "./KnowledgeIndexer";
