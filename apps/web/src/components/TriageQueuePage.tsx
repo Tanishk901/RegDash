@@ -111,6 +111,14 @@ export function TriageQueuePage() {
 
       {queue.error && <div className="banner banner-error" role="alert">{queue.error}</div>}
 
+      {!queue.data && !queue.error && (
+        <div className="skeleton" aria-busy="true">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="skeleton-card" style={{ height: 56 }} />
+          ))}
+        </div>
+      )}
+
       {queue.data && queue.data.length === 0 && (
         <p className="muted">No triage suggestions yet. Click "Run triage on new tickets" to generate them.</p>
       )}
