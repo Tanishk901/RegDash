@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { TemplateStore } from "./TemplateStore";
 import path from "node:path";
 import { rm } from "node:fs/promises";
