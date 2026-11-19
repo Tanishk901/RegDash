@@ -1,4 +1,4 @@
-import type { Priority, SlaState, Ticket, TicketSlaDetail, TicketView } from "./types";
+import type { Priority, SlaState, TaskSlaRecord, Ticket, TicketSlaDetail, TicketView } from "./types";
 
 // ── SLA Policy Model ──────────────────────────────────────────────────
 
@@ -97,12 +97,22 @@ export function computeSla(
 }
 
 export function computeSlaDetail(
-  ticket: Pick<Ticket, "createdAt" | "priority" | "status">,
+  ticket: Pick<Ticket, "createdAt" | "priority" | "status"> & { taskSlaRecords?: TaskSlaRecord[] },
   kind: SlaKind,
   policy: SlaPolicy = DEFAULT_POLICY,
   now: Date = new Date(),
 ): TicketSlaDetail {
+  const real = ticket.taskSlaRecords?.find((r) => r.kind === kind);
   const entry = findPolicy(policy, kind, ticket.priority);
+  if (real) {
+    return {
+      kind,
+      state: real.stage,
+      targetHours: entry?.targetHours ?? null,
+      elapsedHours: hoursBetween(ticket.createdAt, now),
+      available: true,
+    };
+  }
   if (!entry) {
     return { kind, state: "OK", targetHours: null, elapsedHours: hoursBetween(ticket.createdAt, now), available: false };
   }
