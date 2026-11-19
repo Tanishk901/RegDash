@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { STATUSES, formatDuration, formatEffort, slaDueAt, type TicketStatus, type TicketView } from "@regdash/shared";
 import { api, serviceNowLink, usePolling, type TeamInfo } from "../lib/api";
 import { PriorityBadge, SlaBadge, SlaDetailBadge, StatusBadge, TypeTag, statusLabel } from "./Badges";
+import { SuggestionsPanel } from "./SuggestionsPanel";
 
 type CommentKind = "work_note" | "customer_comment";
 
@@ -244,6 +245,8 @@ export function TicketDetail({
                 </>
               )}
             </section>
+
+            <SuggestionsPanel ticketNumber={number} />
 
             <dl className="facts">
               <dt>Owner</dt>

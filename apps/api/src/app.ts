@@ -6,8 +6,9 @@ import { MAX_UPLOAD_MB } from "./lib/upload";
 import { ticketRoutes, type RouteOptions } from "./routes/tickets";
 import { viewRoutes } from "./routes/views";
 import { knowledgeRoutes, type KnowledgeRouteOptions } from "./routes/knowledge";
+import { suggestionsRoutes, type SuggestionsRouteOptions } from "./routes/suggestions";
 
-export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions } = {}) {
+export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(cors({ origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] }));
@@ -15,6 +16,7 @@ export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?:
   app.use("/api", ticketRoutes(store, opts));
   if (opts.viewStore) app.use("/api/views", viewRoutes(opts.viewStore));
   if (opts.copilot) app.use("/api/knowledge", knowledgeRoutes(opts.copilot));
+  if (opts.suggestions) app.use("/api/tickets", suggestionsRoutes(opts.suggestions));
   app.use((_req, res) => res.status(404).json({ error: "Not found" }));
   // Express recognises an error handler by its four arguments, so _next has to stay.
   app.use((err: Error & { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {

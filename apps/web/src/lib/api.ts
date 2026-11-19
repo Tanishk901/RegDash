@@ -79,6 +79,39 @@ export interface ExportColumn {
   header: string;
 }
 
+export interface Suggestion {
+  id: string;
+  answer: string;
+  citations: { chunkId: string; title: string; snippet: string }[];
+  model: string;
+  feedback: "accept" | "dismiss" | "flag" | null;
+}
+
+export interface SuggestionsResponse {
+  ticketNumber: string;
+  suggestions: Suggestion[];
+  sources: { id: string; title: string; source: string; score: number }[];
+}
+
+export interface KnowledgeResult {
+  id: string;
+  source: string;
+  title: string;
+  content: string;
+  score: number;
+}
+
+export interface KnowledgeSearchResponse {
+  query: string;
+  results: KnowledgeResult[];
+}
+
+export interface KnowledgeStatus {
+  totalChunks: number;
+  bySources: Record<string, number>;
+  lastIndexedAt: string | null;
+}
+
 export const api = {
   summary: () => get<DashboardSummary>("/api/summary"),
   tickets: (params: URLSearchParams) => get<TicketList>(`/api/tickets?${params}`),
@@ -142,6 +175,19 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status, by }),
     }),
+
+  suggestions: (number: string) =>
+    get<SuggestionsResponse>(`/api/tickets/${encodeURIComponent(number)}/suggestions`),
+  suggestionFeedback: (number: string, suggestionId: string, action: "accept" | "dismiss" | "flag") =>
+    send<unknown>(`/api/tickets/${encodeURIComponent(number)}/suggestions/${encodeURIComponent(suggestionId)}/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    }),
+
+  knowledgeSearch: (q: string) =>
+    get<KnowledgeSearchResponse>(`/api/knowledge/search?q=${encodeURIComponent(q)}`),
+  knowledgeStatus: () => get<KnowledgeStatus>("/api/knowledge/status"),
 };
 
 /** Fetch + poll. Keeps showing the previous data while a reload is in flight. */
