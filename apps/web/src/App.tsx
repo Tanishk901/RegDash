@@ -53,6 +53,7 @@ function Shell() {
   const health = usePolling(() => api.health(), [], DEFAULT_REFRESH_MS);
   const refreshMs = (health.data?.refreshIntervalSeconds ?? 60) * 1000;
   const summary = usePolling(() => api.summary(), [], refreshMs);
+  const pinnedViews = usePolling(() => api.views({ pinned: true }), [], refreshMs);
 
   // Start each page at the top. Opening a ticket stays in the same section, so the list keeps its place.
   const section = pathname.split("/")[1];
@@ -117,6 +118,14 @@ function Shell() {
             <NavLink className={tabClass} to="/tickets">Tickets</NavLink>
             <NavLink className={tabClass} to="/workload">Team workload</NavLink>
             <NavLink className={tabClass} to="/views">Views</NavLink>
+            {pinnedViews.data && pinnedViews.data.length > 0 && (
+              <>
+                <span className="tab-divider" />
+                {pinnedViews.data.map((v) => (
+                  <NavLink key={v.id} className={tabClass} to={`/views/${v.id}`}>{v.name}</NavLink>
+                ))}
+              </>
+            )}
           </nav>
           <div className="meta">
             {h && <SourceStatus health={h} />}

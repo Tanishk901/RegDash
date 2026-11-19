@@ -139,6 +139,7 @@ a.tab {
 }
 a.tab:hover { color: var(--text); background: var(--surface-2); }
 a.tab.active { color: var(--accent); background: var(--accent-bg); font-weight: 600; }
+.tab-divider { width: 1px; align-self: stretch; margin: 4px 6px; background: var(--border); }
 
 /* ---------- banners ---------- */
 .banner { padding: 10px 14px; border-radius: var(--radius); margin-bottom: 12px; font-size: 14px; }
