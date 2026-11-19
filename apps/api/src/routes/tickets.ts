@@ -35,9 +35,11 @@ export interface RouteOptions {
   servicenowUrl?: string;
   /** Enables uploading a tracker workbook from the dashboard. */
   upload?: TrackerUpload;
+  /** How often the backend refreshes data, so the frontend can match. */
+  refreshIntervalSeconds?: number;
 }
 
-export function ticketRoutes(store: TicketStore, { now = () => new Date(), servicenowUrl, upload }: RouteOptions = {}) {
+export function ticketRoutes(store: TicketStore, { now = () => new Date(), servicenowUrl, upload, refreshIntervalSeconds }: RouteOptions = {}) {
   const r = Router();
 
   /** Parses list filters from the query string; sends a 400 and returns null if they're invalid. */
@@ -63,6 +65,7 @@ export function ticketRoutes(store: TicketStore, { now = () => new Date(), servi
       rejectedRows: store.rejectedRows(),
       reading: store.reading(),
       servicenowUrl: servicenowUrl ?? null,
+      refreshIntervalSeconds: refreshIntervalSeconds ?? null,
       upload: upload?.current() ?? null,
     });
   });

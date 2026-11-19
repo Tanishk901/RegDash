@@ -17,7 +17,7 @@ await upload.restore();
 await store.refresh();
 store.startAutoRefresh(cfg.REFRESH_INTERVAL_SECONDS);
 
-createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload }).listen(cfg.PORT, () => {
+createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS }).listen(cfg.PORT, () => {
   console.log(
     `RegDash API on http://localhost:${cfg.PORT}  source=${upload.current() ? "upload" : cfg.DATA_SOURCE}  tickets=${store.all().length}` +
       (store.lastError ? `  (last error: ${store.lastError})` : ""),

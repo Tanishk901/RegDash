@@ -31,5 +31,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     console.error("Invalid configuration:", parsed.error.flatten().fieldErrors);
     process.exit(1);
   }
-  return parsed.data;
+  const cfg = parsed.data;
+  if (!cleaned.REFRESH_INTERVAL_SECONDS && cfg.DATA_SOURCE === "servicenow") {
+    cfg.REFRESH_INTERVAL_SECONDS = 60;
+  }
+  return cfg;
 }
