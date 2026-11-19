@@ -34,6 +34,9 @@ Phase 1 (read-only dashboard) is complete. Phases 2 and 3 are in [Roadmap](#road
 | **Incident and SR detection** | Rules find the right sheet, columns and ticket type in a messy tracker, and show how the file was read. |
 | **SLA that pauses** | Tickets waiting on someone outside the team show as Paused, not breached. |
 | **Keeps working in an outage** | If a refresh fails, the last good data stays on screen with a clear error. |
+| **AI copilot** | Knowledge search (Ctrl+K), resolution suggestions with citations, and auto-triage with bulk approve/reject. |
+| **Email templates** | Create and manage email templates for acknowledgements, reminders, escalations and more. Compose emails from the ticket detail panel. |
+| **Custom views** | Save, pin and share filtered views of the ticket table. |
 
 <table>
   <tr>
@@ -61,10 +64,13 @@ That runs on **mock data** with no setup, and no real company data is involved.
 
 | URL | Shows |
 |---|---|
-| `/` | Dashboard: totals and gauges. Click one to see its tickets |
-| `/tickets` | Ticket table with filters |
+| `/` | Dashboard: totals, gauges, copilot status and feedback stats |
+| `/tickets` | Ticket table with filters and triage badges |
 | `/tickets/INC0012345` | The same table with that ticket's detail panel open |
 | `/workload` | Open tickets per engineer |
+| `/views` | Saved and pinned custom views |
+| `/triage` | Auto-triage queue with bulk actions and accuracy trend |
+| `/templates` | Email template management (Phase 3) |
 
 ## Data sources
 
@@ -254,6 +260,21 @@ flowchart LR
 | `GET /api/tickets/:number` | One ticket |
 | `POST /api/upload?fileName=` | Upload a tracker (raw `.xlsx` body) |
 | `DELETE /api/upload` | Remove the upload and return to the configured source |
+| `GET /api/views` | List saved views |
+| `POST /api/views` | Create a saved view |
+| `GET /api/knowledge/search?q=` | Search the knowledge base |
+| `GET /api/knowledge/status` | Knowledge index status |
+| `GET /api/knowledge/feedback-stats` | Suggestion feedback accept/dismiss/flag rates |
+| `GET /api/tickets/:number/suggestions` | Resolution suggestions for a ticket |
+| `POST /api/triage/run` | Run auto-triage on new tickets |
+| `GET /api/triage/queue` | List the triage queue |
+| `GET /api/triage/queue.csv` | Export the triage queue as CSV |
+| `GET /api/triage/stats` | Triage statistics |
+| `GET /api/triage/trend` | 7-day triage accuracy trend |
+| `PUT /api/triage/bulk` | Bulk approve or reject triage items |
+| `GET /api/templates` | List email templates |
+| `POST /api/templates` | Create an email template |
+| `POST /api/email/send` | Send an email (mock service in dev) |
 
 </details>
 
