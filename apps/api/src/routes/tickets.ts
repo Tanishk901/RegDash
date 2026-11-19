@@ -37,9 +37,11 @@ export interface RouteOptions {
   upload?: TrackerUpload;
   /** How often the backend refreshes data, so the frontend can match. */
   refreshIntervalSeconds?: number;
+  /** If set, ticket list items include their triage status. */
+  triageStore?: { queue(): { ticketNumber: string; status: string }[] };
 }
 
-export function ticketRoutes(store: TicketStore, { now = () => new Date(), servicenowUrl, upload, refreshIntervalSeconds }: RouteOptions = {}) {
+export function ticketRoutes(store: TicketStore, { now = () => new Date(), servicenowUrl, upload, refreshIntervalSeconds, triageStore }: RouteOptions = {}) {
   const r = Router();
 
   /** Parses list filters from the query string; sends a 400 and returns null if they're invalid. */
@@ -133,6 +135,11 @@ export function ticketRoutes(store: TicketStore, { now = () => new Date(), servi
     if (!items) return;
     // Owners list for the filter dropdown, independent of the current filter.
     const owners = [...new Set(store.all().map((t) => t.assignedTo).filter((o): o is string => !!o))].sort();
+    if (triageStore) {
+      const triageMap = new Map(triageStore.queue().map((t) => [t.ticketNumber, t.status]));
+      const enriched = items.map((t) => ({ ...t, triageStatus: triageMap.get(t.number) ?? null }));
+      return res.json({ items: enriched, total: items.length, owners });
+    }
     res.json({ items, total: items.length, owners });
   });
 

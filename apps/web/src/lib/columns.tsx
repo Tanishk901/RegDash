@@ -139,6 +139,16 @@ export const ALL_DISPLAY_COLUMNS: DisplayColumn[] = [
     render: (t) => t.blocker ?? muted("—"),
   },
   {
+    key: "triage",
+    header: "Triage",
+    render: (t) => {
+      const s = (t as TicketView & { triageStatus?: string }).triageStatus;
+      if (!s) return muted("—");
+      const cls = s === "approved" ? "triage-approved" : s === "rejected" ? "triage-rejected" : "triage-pending";
+      return <span className={`triage-badge ${cls}`}>{s}</span>;
+    },
+  },
+  {
     key: "pendingSince",
     header: "Pending since",
     render: (t) => (t.pendingSince ? new Date(t.pendingSince).toLocaleString() : muted("—")),

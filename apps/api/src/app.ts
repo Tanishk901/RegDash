@@ -9,7 +9,7 @@ import { knowledgeRoutes, type KnowledgeRouteOptions } from "./routes/knowledge"
 import { suggestionsRoutes, type SuggestionsRouteOptions } from "./routes/suggestions";
 import { triageRoutes, type TriageRouteOptions } from "./routes/triage";
 
-export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions } = {}) {
+export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions; triageStore?: RouteOptions["triageStore"] } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(cors({ origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] }));

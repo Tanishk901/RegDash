@@ -42,7 +42,7 @@ const triageEngine = new TriageEngine(embedding, knowledgeStore, store.teamMembe
 const copilot = { knowledgeStore, embedding, indexer, ticketStore: store };
 const suggestions = { llm, embedding, knowledgeStore, feedbackStore, ticketStore: store };
 const triage = { triageEngine, triageStore, ticketStore: store };
-createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS, copilot, suggestions, triage }).listen(cfg.PORT, () => {
+createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS, copilot, suggestions, triage, triageStore }).listen(cfg.PORT, () => {
   console.log(
     `RegDash API on http://localhost:${cfg.PORT}  source=${upload.current() ? "upload" : cfg.DATA_SOURCE}  tickets=${store.all().length}` +
       (store.lastError ? `  (last error: ${store.lastError})` : ""),
