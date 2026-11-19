@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { STATUSES, formatDuration, formatEffort, slaDueAt, type TicketStatus, type TicketView } from "@regdash/shared";
 import { api, serviceNowLink, usePolling, type TeamInfo } from "../lib/api";
 import { PriorityBadge, SlaBadge, SlaDetailBadge, StatusBadge, TypeTag, statusLabel } from "./Badges";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { SuggestionsPanel } from "./SuggestionsPanel";
 
 type CommentKind = "work_note" | "customer_comment";
@@ -246,7 +247,9 @@ export function TicketDetail({
               )}
             </section>
 
-            <SuggestionsPanel ticketNumber={number} />
+            <ErrorBoundary fallback={<p className="muted small">Suggestions unavailable.</p>}>
+              <SuggestionsPanel ticketNumber={number} />
+            </ErrorBoundary>
 
             <dl className="facts">
               <dt>Owner</dt>
