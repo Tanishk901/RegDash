@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, usePolling, type TriageItem } from "../lib/api";
 
@@ -72,8 +72,11 @@ export function TriageQueuePage() {
   const queue = usePolling(() => api.triageQueue(), [], 30_000);
   const stats = usePolling(() => api.triageStats(), [], 30_000);
   const [running, setRunning] = useState(false);
+  const lastRun = useRef(0);
 
   const runTriage = async () => {
+    if (Date.now() - lastRun.current < 2000) return;
+    lastRun.current = Date.now();
     setRunning(true);
     try {
       await api.triageRun();
