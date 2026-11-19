@@ -133,9 +133,12 @@ export function TriageQueuePage() {
     <div className="triage-page">
       <div className="section-head">
         <h2>Auto-Triage Queue</h2>
-        <button onClick={runTriage} disabled={running}>
-          {running ? "Running…" : "Run triage on new tickets"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={runTriage} disabled={running}>
+            {running ? "Running…" : "Run triage on new tickets"}
+          </button>
+          <a className="button" href="/api/triage/queue.csv" download>Export CSV</a>
+        </div>
       </div>
 
       {stats.data && (

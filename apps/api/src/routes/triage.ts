@@ -26,6 +26,30 @@ export function triageRoutes({ triageEngine, triageStore, ticketStore }: TriageR
     res.json(triageStore.stats());
   });
 
+  r.get("/queue.csv", (req, res) => {
+    const status = req.query.status as "pending" | "approved" | "rejected" | undefined;
+    const items = triageStore.queue(status);
+    const header = "Ticket,Priority,Category,Assignee,Confidence,Status,Reasoning,Created,Reviewed At\n";
+    const rows = items.map((s) =>
+      [
+        s.ticketNumber,
+        s.suggestedPriority,
+        s.suggestedCategory,
+        s.suggestedAssignee ?? "",
+        String(s.confidence),
+        s.status,
+        `"${s.reasoning.replace(/"/g, '""')}"`,
+        s.createdAt,
+        s.reviewedAt ?? "",
+      ].join(","),
+    );
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+    res
+      .type("text/csv; charset=utf-8")
+      .attachment(`regdash-triage-${stamp}.csv`)
+      .send(header + rows.join("\n"));
+  });
+
   r.post("/run", async (_req, res, next) => {
     try {
       const tickets = ticketStore.all();
