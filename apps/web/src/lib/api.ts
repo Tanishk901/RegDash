@@ -136,6 +136,23 @@ export interface TriageStats {
   accuracy: number;
 }
 
+export interface EmailTemplateListItem {
+  id: string;
+  name: string;
+  kind: string;
+  subject: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailTemplateCreateInput {
+  name: string;
+  kind: string;
+  subject: string;
+  body: string;
+}
+
 export const api = {
   summary: () => get<DashboardSummary>("/api/summary"),
   tickets: (params: URLSearchParams) => get<TicketList>(`/api/tickets?${params}`),
@@ -232,6 +249,23 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     }),
+
+  templates: () => get<EmailTemplateListItem[]>("/api/templates"),
+  template: (id: string) => get<EmailTemplateListItem>(`/api/templates/${encodeURIComponent(id)}`),
+  createTemplate: (input: EmailTemplateCreateInput) =>
+    send<EmailTemplateListItem>("/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  updateTemplate: (id: string, input: Partial<EmailTemplateCreateInput>) =>
+    send<EmailTemplateListItem>(`/api/templates/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  deleteTemplate: (id: string) =>
+    send<{ ok: boolean }>(`/api/templates/${encodeURIComponent(id)}`, { method: "DELETE" }),
 };
 
 /** Fetch + poll. Keeps showing the previous data while a reload is in flight. */
