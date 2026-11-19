@@ -1,5 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import { APPLICATION_CODES, ENVIRONMENTS, PRIORITIES, STATUSES } from "@regdash/shared";
 import { statusLabel } from "./Badges";
+import { ALL_DISPLAY_COLUMNS, DEFAULT_COLUMN_KEYS } from "../lib/columns";
 
 export function Filters({
   params,
@@ -11,8 +13,7 @@ export function Filters({
   onChange: (next: Record<string, string | null>) => void;
 }) {
   const val = (k: string) => params.get(k) ?? "";
-  const active = [...params.keys()].some((k) => k !== "sort");
-  // Marks a control whose filter is applied, so it's obvious at a glance.
+  const active = [...params.keys()].some((k) => k !== "sort" && k !== "columns" && k !== "groupBy");
   const set = (k: string) => (val(k) ? "is-set" : undefined);
 
   return (
@@ -91,10 +92,87 @@ export function Filters({
         />
         Include closed
       </label>
+      <ColumnPicker params={params} onChange={onChange} />
       {active && (
         <button className="link" onClick={() => onChange({ q: null, type: null, status: null, priority: null, assignedTo: null, application: null, environment: null, sla: null, stale: null, includeClosed: null })}>
           Clear filters
         </button>
+      )}
+    </div>
+  );
+}
+
+function ColumnPicker({
+  params,
+  onChange,
+}: {
+  params: URLSearchParams;
+  onChange: (next: Record<string, string | null>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const current = params.get("columns")?.split(",").filter(Boolean) ?? DEFAULT_COLUMN_KEYS;
+  const selected = new Set(current);
+  const isCustom = params.has("columns");
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const toggle = (key: string) => {
+    const next = new Set(selected);
+    next.has(key) ? next.delete(key) : next.add(key);
+    if (next.size === 0) return;
+    onChange({ columns: [...next].join(",") });
+  };
+
+  const reset = () => {
+    onChange({ columns: null });
+    setOpen(false);
+  };
+
+  return (
+    <div className="column-picker-wrap" ref={ref}>
+      <button className={`link${isCustom ? " is-set" : ""}`} onClick={() => setOpen(!open)}>
+        Columns{isCustom ? ` (${selected.size})` : ""} ▾
+      </button>
+      {open && (
+        <div className="export-picker">
+          <div className="picker-head">
+            <span className="strong small">Show columns</span>
+            {isCustom && (
+              <button className="link small" onClick={reset}>Reset</button>
+            )}
+          </div>
+          <div className="picker-list">
+            {ALL_DISPLAY_COLUMNS.map((c) => (
+              <label key={c.key} className="picker-item">
+                <input
+                  type="checkbox"
+                  checked={selected.has(c.key)}
+                  onChange={() => toggle(c.key)}
+                />
+                {c.header}
+              </label>
+            ))}
+          </div>
+          <div className="picker-foot">
+            <span className="muted small">{selected.size} of {ALL_DISPLAY_COLUMNS.length} columns</span>
+          </div>
+        </div>
       )}
     </div>
   );
