@@ -115,8 +115,16 @@ export function mapRecord(r: SnRecord, type: TicketType): { ticket?: Ticket; rea
 export class ServiceNowSource implements TicketSource {
   readonly name = "servicenow" as const;
   private fetchImpl: typeof fetch;
+  private recordIndex = new Map<string, { sysId: string; table: string }>();
+
   constructor(private opts: ServiceNowOptions) {
     this.fetchImpl = opts.fetchImpl ?? fetch;
+  }
+
+  private lookupRecord(number: string): { sysId: string; table: string } {
+    const rec = this.recordIndex.get(number);
+    if (!rec) throw new Error(`Ticket ${number} not found in ServiceNow record index`);
+    return rec;
   }
 
   private async request(method: string, path: string, body?: unknown): Promise<Response> {
@@ -163,13 +171,22 @@ export class ServiceNowSource implements TicketSource {
       this.fetchTable("incident"),
       this.fetchTable("sc_req_item"),
     ]);
+    this.recordIndex.clear();
     const tickets: Ticket[] = [];
     const rejected: SourceResult["rejected"] = [];
-    for (const [rows, type] of [[incidents, "INCIDENT"], [ritms, "SR"]] as const) {
+    for (const [rows, type, table] of [
+      [incidents, "INCIDENT", "incident"],
+      [ritms, "SR", "sc_req_item"],
+    ] as const) {
       for (const r of rows) {
         const { ticket, reason } = mapRecord(r, type);
-        if (ticket) tickets.push(ticket);
-        else rejected.push({ row: v(r, "number") ?? "?", reason: reason! });
+        if (ticket) {
+          tickets.push(ticket);
+          const sysId = v(r, "sys_id");
+          if (sysId) this.recordIndex.set(ticket.number, { sysId, table });
+        } else {
+          rejected.push({ row: v(r, "number") ?? "?", reason: reason! });
+        }
       }
     }
     return { tickets, rejected };
