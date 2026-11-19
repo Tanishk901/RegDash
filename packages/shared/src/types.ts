@@ -180,3 +180,19 @@ export const STATUSES: TicketStatus[] = ["NEW", "IN_PROGRESS", "ON_HOLD", "RESOL
 
 export type GroupByField = "assignedTo" | "priority" | "status" | "type" | "sla" | "application" | "environment";
 export const GROUP_BY_FIELDS: GroupByField[] = ["assignedTo", "priority", "status", "type", "sla", "application", "environment"];
+
+export interface SavedView {
+  id: string;
+  name: string;
+  description: string;
+  columns: string[];
+  filters: TicketFilters;
+  sort: SortKey;
+  sortDir: "asc" | "desc";
+  groupBy: GroupByField | null;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SavedViewInput = Omit<SavedView, "id" | "createdAt" | "updatedAt">;
