@@ -44,6 +44,7 @@ export function knowledgeRoutes({ knowledgeStore, embedding, indexer, ticketStor
   });
 
   r.get("/status", (_req, res) => {
+    res.set("Cache-Control", "public, max-age=30");
     res.json(knowledgeStore.status());
   });
 
