@@ -124,7 +124,7 @@ export function TriageQueuePage() {
       )}
 
       {queue.data && queue.data.length > 0 && (
-        <table className="triage-table">
+        <table className="triage-table" role="table" aria-label="Triage queue">
           <thead>
             <tr>
               <th>Ticket</th>

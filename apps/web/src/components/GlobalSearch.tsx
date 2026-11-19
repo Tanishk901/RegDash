@@ -97,7 +97,7 @@ export function GlobalSearch() {
       />
       <span className="global-search-kbd">Ctrl+K</span>
       {open && results.length > 0 && (
-        <div className="search-results-dropdown" role="listbox">
+        <div className="search-results-dropdown" role="listbox" aria-label="Knowledge search results">
           {results.map((r, i) => (
             <div
               key={r.id}
