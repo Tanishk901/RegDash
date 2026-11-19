@@ -199,7 +199,7 @@ function Shell() {
 }
 
 function DashboardPage() {
-  const { summary } = useShared();
+  const { summary, health } = useShared();
   const [params] = useSearchParams();
 
   // Links saved before the pages were split carried the view and filters on "/".
@@ -236,6 +236,28 @@ function DashboardPage() {
         </div>
       </div>
       <SummaryCards summary={summary} />
+
+      {health?.copilot && (
+        <>
+          <div className="section-head">
+            <h2>AI Copilot</h2>
+          </div>
+          <div className="cards" style={{ maxWidth: 480 }}>
+            <div className="card">
+              <span className="card-label">Copilot</span>
+              <span className="card-value" style={{ fontSize: 18, color: health.copilot.enabled ? "var(--ok)" : "var(--muted)" }}>
+                {health.copilot.enabled ? "Active" : "Inactive"}
+              </span>
+            </div>
+            <div className="card">
+              <span className="card-label">Auto-triage</span>
+              <span className="card-value" style={{ fontSize: 18, color: health.copilot.triage ? "var(--ok)" : "var(--muted)" }}>
+                {health.copilot.triage ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

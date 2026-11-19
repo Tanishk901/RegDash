@@ -21,6 +21,7 @@ export interface Health {
   refreshIntervalSeconds: number | null;
   /** Set while a workbook uploaded from the dashboard is the live source. */
   upload: { fileName: string; uploadedAt: string } | null;
+  copilot?: { enabled: boolean; triage: boolean };
 }
 
 export interface UploadResult {
