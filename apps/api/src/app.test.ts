@@ -1,14 +1,29 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import path from "node:path";
+import os from "node:os";
 import request from "supertest";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "./app";
 import { TicketStore } from "./lib/store";
+import { ViewStore } from "./lib/view-store";
 import { MockSource } from "./sources/mock";
 
 const store = new TicketStore(new MockSource());
+let viewDir: string;
+let viewStore: ViewStore;
+let appWithViews: ReturnType<typeof createApp>;
 const app = createApp(store);
 
 beforeAll(async () => {
   await store.refresh();
+  viewDir = await mkdtemp(path.join(os.tmpdir(), "views-test-"));
+  viewStore = new ViewStore(path.join(viewDir, "views.json"));
+  await viewStore.restore();
+  appWithViews = createApp(store, { viewStore });
+});
+
+afterAll(async () => {
+  await rm(viewDir, { recursive: true, force: true });
 });
 
 describe("API", () => {
@@ -96,6 +111,57 @@ describe("API", () => {
     expect((await request(app).get("/api/health")).body.servicenowUrl).toBeNull();
     const withSn = createApp(store, { servicenowUrl: "https://example.service-now.com" });
     expect((await request(withSn).get("/api/health")).body.servicenowUrl).toBe("https://example.service-now.com");
+  });
+
+  it("CRUD lifecycle for saved views", async () => {
+    // Create
+    const created = await request(appWithViews).post("/api/views").send({
+      name: "P1 Incidents",
+      columns: ["number", "summary", "priority"],
+      filters: { type: "INCIDENT" },
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.name).toBe("P1 Incidents");
+    expect(created.body.id).toBeTruthy();
+    const id = created.body.id;
+
+    // List
+    const listed = await request(appWithViews).get("/api/views");
+    expect(listed.body.some((v: { id: string }) => v.id === id)).toBe(true);
+
+    // Get
+    const fetched = await request(appWithViews).get(`/api/views/${id}`);
+    expect(fetched.status).toBe(200);
+    expect(fetched.body.name).toBe("P1 Incidents");
+
+    // Update
+    const updated = await request(appWithViews).put(`/api/views/${id}`).send({ name: "Renamed", pinned: true });
+    expect(updated.status).toBe(200);
+    expect(updated.body.name).toBe("Renamed");
+    expect(updated.body.pinned).toBe(true);
+
+    // Pinned filter
+    const pinned = await request(appWithViews).get("/api/views?pinned=true");
+    expect(pinned.body).toHaveLength(1);
+
+    // Delete
+    const deleted = await request(appWithViews).delete(`/api/views/${id}`);
+    expect(deleted.status).toBe(200);
+
+    // 404 after delete
+    const gone = await request(appWithViews).get(`/api/views/${id}`);
+    expect(gone.status).toBe(404);
+  });
+
+  it("validates view input", async () => {
+    const res = await request(appWithViews).post("/api/views").send({ description: "no name" });
+    expect(res.status).toBe(400);
+  });
+
+  it("404s on unknown view id", async () => {
+    expect((await request(appWithViews).get("/api/views/nonexistent")).status).toBe(404);
+    expect((await request(appWithViews).put("/api/views/nonexistent").send({ name: "X" })).status).toBe(404);
+    expect((await request(appWithViews).delete("/api/views/nonexistent")).status).toBe(404);
   });
 
   it("keeps serving last good data when a refresh fails", async () => {
