@@ -1,6 +1,6 @@
 {
   "name": "regdash",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "description": "RegDash — RegCreate Operations & Automation Dashboard",
   "packageManager": "pnpm@10.28.0",

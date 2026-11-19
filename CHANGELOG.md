@@ -1,5 +1,42 @@
 # Changelog
 
+## 4.1.0 — Phase 4 Polish + Phase 3 Email (2026-11-19)
+
+### Dark mode & UI polish
+- Copilot/triage/search CSS migrated from hardcoded hex to CSS custom properties for dark mode
+- Loading skeleton for triage queue page
+- Empty state for suggestions panel
+- Keyboard shortcut help dialog (press ?)
+- Error boundary around SuggestionsPanel for graceful degradation
+
+### Accessibility
+- ARIA labels on triage table and search dropdown
+- Debounce on triage run button to prevent double-clicks
+
+### Triage improvements
+- Triage status badge column in ticket table
+- Bulk triage: select-all with approve/reject multiple (`PUT /api/triage/bulk`)
+- Triage accuracy trend chart (last 7 days) with `GET /api/triage/trend`
+- Export triage queue to CSV (`GET /api/triage/queue.csv`)
+
+### Email templates (Phase 3)
+- `EmailTemplate`, `EmailTemplateInput`, `EmailTemplateKind` types in shared package
+- `TemplateStore` with JSON file persistence and CRUD
+- Template CRUD API routes (`GET/POST/PUT/DELETE /api/templates`)
+- Template management UI page at `/templates` with nav tab
+- `EmailService` interface + `MockEmailService` adapter
+- Email compose modal on ticket detail with template selection
+- 6 TemplateStore tests
+
+### Dashboard & copilot
+- Copilot status (enabled/triage) in health endpoint and dashboard card
+- Feedback stats panel (accept/dismiss/flag rates) on dashboard
+- Similar tickets section in ticket detail from knowledge store
+- Cache-Control header on knowledge status endpoint
+
+### Documentation
+- README updated with Phase 3 + Phase 4 pages, features and API endpoints
+
 ## 4.0.0 — Phase 4: Support Copilot (2026-11-19)
 
 ### RAG pipeline + knowledge store (FR-13.x)
