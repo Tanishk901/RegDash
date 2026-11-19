@@ -66,6 +66,8 @@ export interface Ticket {
   itemCount: number | null;
 
   updates: TicketUpdate[];
+  /** Real SLA records from ServiceNow task_sla; absent for Excel/mock unless generated. */
+  taskSlaRecords?: TaskSlaRecord[];
   /** Which source produced this record. */
   source: "mock" | "excel" | "servicenow";
 
@@ -91,6 +93,14 @@ export interface SourceReading {
   typedBy: { column: number; number: number; sheet: number };
   /** Tickets whose type column and number prefix disagree. The type column wins. */
   typeConflicts: { number: string; column: TicketType; prefix: TicketType }[];
+}
+
+/** A real SLA record from ServiceNow's task_sla table. */
+export interface TaskSlaRecord {
+  kind: "response" | "resolution";
+  stage: SlaState;
+  businessTimeLeftHours: number;
+  plannedEndTime: string | null;
 }
 
 /** Detail for one SLA clock (response or resolution). */
