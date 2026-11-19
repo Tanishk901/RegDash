@@ -71,6 +71,7 @@ function TriageRow({ item, onAction }: { item: TriageItem; onAction: () => void 
 export function TriageQueuePage() {
   const queue = usePolling(() => api.triageQueue(), [], 30_000);
   const stats = usePolling(() => api.triageStats(), [], 30_000);
+  const trend = usePolling(() => api.triageTrend(), [], 30_000);
   const [running, setRunning] = useState(false);
   const lastRun = useRef(0);
 
@@ -145,6 +146,34 @@ export function TriageQueuePage() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {trend.data && trend.data.some((d) => d.total > 0) && (
+        <div style={{ marginTop: 20 }}>
+          <h3 style={{ fontSize: 14, marginBottom: 8 }}>Accuracy trend (last 7 days)</h3>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", height: 80 }}>
+            {trend.data.map((d) => {
+              const max = Math.max(...trend.data!.map((t) => t.total), 1);
+              const h = (d.total / max) * 100;
+              const pct = d.total > 0 ? Math.round((d.approved / d.total) * 100) : 0;
+              return (
+                <div key={d.date} style={{ flex: 1, textAlign: "center" }}>
+                  <div
+                    style={{
+                      height: `${h}%`,
+                      minHeight: 4,
+                      background: pct >= 70 ? "var(--ok)" : pct >= 40 ? "var(--warn)" : "var(--danger)",
+                      borderRadius: 4,
+                      opacity: 0.7,
+                    }}
+                    title={`${d.date}: ${d.approved} approved, ${d.rejected} rejected (${pct}%)`}
+                  />
+                  <div className="muted" style={{ fontSize: 10, marginTop: 4 }}>{d.date.slice(5)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {queue.data && queue.data.length > 0 && (

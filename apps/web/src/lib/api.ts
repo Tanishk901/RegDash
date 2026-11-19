@@ -134,6 +134,13 @@ export interface TriageItem {
   originalAssignee: string | null;
 }
 
+export interface TriageTrendDay {
+  date: string;
+  approved: number;
+  rejected: number;
+  total: number;
+}
+
 export interface TriageStats {
   total: number;
   pending: number;
@@ -243,6 +250,7 @@ export const api = {
     return get<TriageItem[]>(`/api/triage/queue?${p}`);
   },
   triageStats: () => get<TriageStats>("/api/triage/stats"),
+  triageTrend: () => get<TriageTrendDay[]>("/api/triage/trend"),
   triageRun: () => send<{ triaged: number }>("/api/triage/run", { method: "POST" }),
   triageApprove: (id: string) =>
     send<TriageItem>(`/api/triage/${encodeURIComponent(id)}/approve`, {

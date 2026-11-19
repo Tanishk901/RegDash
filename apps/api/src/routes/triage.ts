@@ -46,6 +46,26 @@ export function triageRoutes({ triageEngine, triageStore, ticketStore }: TriageR
     }
   });
 
+  r.get("/trend", (_req, res) => {
+    const all = triageStore.queue();
+    const days = 7;
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    const trend: { date: string; approved: number; rejected: number; total: number }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const dayStart = new Date(now - i * DAY);
+      const dateStr = dayStart.toISOString().slice(0, 10);
+      const dayItems = all.filter((s) => s.reviewedAt && s.reviewedAt.startsWith(dateStr));
+      trend.push({
+        date: dateStr,
+        approved: dayItems.filter((s) => s.status === "approved").length,
+        rejected: dayItems.filter((s) => s.status === "rejected").length,
+        total: dayItems.length,
+      });
+    }
+    res.json(trend);
+  });
+
   r.put("/:id/approve", async (req, res) => {
     const parsed = ReviewBody.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
