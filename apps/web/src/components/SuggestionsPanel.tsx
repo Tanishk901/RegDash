@@ -71,7 +71,16 @@ export function SuggestionsPanel({ ticketNumber }: { ticketNumber: string }) {
 
   if (error) return null;
   if (!data) return <p className="muted small">Loading suggestions…</p>;
-  if (data.suggestions.length === 0) return null;
+  if (data.suggestions.length === 0) {
+    return (
+      <section className="suggestions-panel suggestions-empty">
+        <p className="muted small" style={{ padding: "12px 14px", margin: 0, textAlign: "center" }}>
+          <span className="copilot-icon" aria-hidden="true">&#9670;</span>{" "}
+          No suggestions yet — the copilot has nothing to recommend for this ticket.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="suggestions-panel">
