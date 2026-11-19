@@ -8,8 +8,10 @@ import { viewRoutes } from "./routes/views";
 import { knowledgeRoutes, type KnowledgeRouteOptions } from "./routes/knowledge";
 import { suggestionsRoutes, type SuggestionsRouteOptions } from "./routes/suggestions";
 import { triageRoutes, type TriageRouteOptions } from "./routes/triage";
+import { templateRoutes } from "./routes/templates";
+import type { TemplateStore } from "./email/TemplateStore";
 
-export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions; triageStore?: RouteOptions["triageStore"] } = {}) {
+export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions; triageStore?: RouteOptions["triageStore"]; templateStore?: TemplateStore } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(cors({ origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] }));
@@ -19,6 +21,7 @@ export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?:
   if (opts.copilot) app.use("/api/knowledge", knowledgeRoutes(opts.copilot));
   if (opts.suggestions) app.use("/api/tickets", suggestionsRoutes(opts.suggestions));
   if (opts.triage) app.use("/api/triage", triageRoutes(opts.triage));
+  if (opts.templateStore) app.use("/api/templates", templateRoutes(opts.templateStore));
   app.use((_req, res) => res.status(404).json({ error: "Not found" }));
   // Express recognises an error handler by its four arguments, so _next has to stay.
   app.use((err: Error & { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {

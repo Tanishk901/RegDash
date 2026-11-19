@@ -8,6 +8,7 @@ import { MockLlmProvider, MockEmbeddingProvider, InMemoryKnowledgeStore, Knowled
 import { FeedbackStore } from "./copilot/FeedbackStore";
 import { TriageEngine } from "./copilot/TriageEngine";
 import { TriageStore } from "./copilot/TriageStore";
+import { TemplateStore } from "./email/TemplateStore";
 
 const cfg = loadConfig();
 const configured = createSource(cfg);
@@ -25,12 +26,14 @@ const knowledgeStore = new InMemoryKnowledgeStore(cfg.KNOWLEDGE_PATH);
 const indexer = new KnowledgeIndexer(embedding, knowledgeStore);
 const feedbackStore = new FeedbackStore();
 const triageStore = new TriageStore();
+const templateStore = new TemplateStore();
 
 await upload.restore();
 await viewStore.restore();
 await knowledgeStore.restore();
 await feedbackStore.restore();
 await triageStore.restore();
+await templateStore.restore();
 await store.refresh();
 
 const indexed = await indexer.indexAll(store.all());
@@ -42,7 +45,7 @@ const triageEngine = new TriageEngine(embedding, knowledgeStore, store.teamMembe
 const copilot = { knowledgeStore, embedding, indexer, ticketStore: store };
 const suggestions = { llm, embedding, knowledgeStore, feedbackStore, ticketStore: store };
 const triage = { triageEngine, triageStore, ticketStore: store };
-createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS, copilot, suggestions, triage, triageStore }).listen(cfg.PORT, () => {
+createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS, copilot, suggestions, triage, triageStore, templateStore }).listen(cfg.PORT, () => {
   console.log(
     `RegDash API on http://localhost:${cfg.PORT}  source=${upload.current() ? "upload" : cfg.DATA_SOURCE}  tickets=${store.all().length}` +
       (store.lastError ? `  (last error: ${store.lastError})` : ""),
