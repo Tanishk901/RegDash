@@ -27,6 +27,7 @@ import { ViewsPage } from "./components/ViewsPage";
 import { CustomViewPage } from "./components/CustomViewPage";
 import { Workload } from "./components/Workload";
 import { TriageQueuePage } from "./components/TriageQueuePage";
+import { GlobalSearch } from "./components/GlobalSearch";
 import { api, usePolling, type Health } from "./lib/api";
 
 const DEFAULT_REFRESH_MS = 60_000;
@@ -129,6 +130,7 @@ function Shell() {
               </>
             )}
           </nav>
+          <GlobalSearch />
           <div className="meta">
             {h && <SourceStatus health={h} />}
             {h && !h.upload && <span className={`source source-${h.source}`}>Source: {h.source}</span>}
