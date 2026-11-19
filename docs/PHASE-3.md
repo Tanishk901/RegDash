@@ -4,8 +4,8 @@
 **Phase:** 3 of 4. Automation
 **Version:** v3.0.0
 **Owner:** Tanishk
-**Status:** Not started. Depends on Phase 2 (live ServiceNow integration, authentication).
-**Last updated:** 18 Nov 2026
+**Status:** In progress. FR-12.x (Custom Dashboard Builder) complete.
+**Last updated:** 19 Nov 2026
 
 ---
 
@@ -83,13 +83,13 @@ Automate the routine communication that eats up engineering time, turn the share
 ### Custom dashboard builder (FR-12.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-12.1 | Column picker: select which ticket fields to display as columns | ⏳ |
-| FR-12.2 | Filter builder: combine any filters (type, status, priority, SLA, assignee, date range, keyword) | ⏳ |
-| FR-12.3 | Group by: group rows by assignee, priority, status, type, or SLA state | ⏳ |
-| FR-12.4 | Save a custom view with a name and description | ⏳ |
-| FR-12.5 | Share a saved view via URL (like Phase 1 filter URLs, but with the full column/group config) | ⏳ |
-| FR-12.6 | Pin favourite views to the navigation sidebar | ⏳ |
-| FR-12.7 | Export any custom view as CSV or Excel | ⏳ |
+| FR-12.1 | Column picker: select which ticket fields to display as columns | ✅ |
+| FR-12.2 | Filter builder: combine any filters (type, status, priority, SLA, assignee, date range, keyword) | ✅ |
+| FR-12.3 | Group by: group rows by assignee, priority, status, type, or SLA state | ✅ |
+| FR-12.4 | Save a custom view with a name and description | ✅ |
+| FR-12.5 | Share a saved view via URL (like Phase 1 filter URLs, but with the full column/group config) | ✅ |
+| FR-12.6 | Pin favourite views to the navigation sidebar | ✅ |
+| FR-12.7 | Export any custom view as CSV or Excel | ✅ |
 
 ---
 

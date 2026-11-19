@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.0.0 — Phase 3: Custom Dashboard Builder (2026-11-19)
+
+### Custom views (FR-12.x)
+
+- `DisplayColumn` type and `ALL_DISPLAY_COLUMNS` array — data-driven column definitions (22 columns)
+- `TicketTable` refactored to render from column definitions; accepts `columns` and `groupBy` props
+- Column picker dropdown in Filters bar — show/hide any column, stored in URL as `?columns=CSV`
+- Group-by dropdown — group tickets by owner, priority, status, type, SLA, application, or environment
+- `GroupByField` type and `GROUP_BY_FIELDS` constant in shared package
+- `SavedView` and `SavedViewInput` types in shared package
+- `ViewStore` class — JSON file persistence with safe-write (temp-file-then-rename)
+- View CRUD API: `GET/POST/PUT/DELETE /api/views` with Zod validation
+- Frontend API client: `api.views()`, `api.view()`, `api.createView()`, `api.updateView()`, `api.deleteView()`
+- `ViewBuilder` component — column picker, sort/direction/group-by selects, name/description/pin fields, Escape to close, ARIA
+- `ViewsPage` — list saved views as cards, create new views, pin/unpin and delete
+- `CustomViewPage` — load a saved view by ID, run it against the ticket API, edit inline
+- Pinned views appear as extra nav tabs in the Shell header
+- Copy-link button on custom view pages
+- Export from custom views respects the view's column selection as default columns
+- CSS for all new components following existing design token system, responsive at 1000px and 720px
+- 14 new tests (ViewStore unit + route integration)
+
 ## 2.1.0 — Phase 2b (2026-11-19)
 
 ### ServiceNow write-back
