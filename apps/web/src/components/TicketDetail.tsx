@@ -164,6 +164,29 @@ function StatusDropdown({
   );
 }
 
+function SimilarTickets({ ticketNumber, description }: { ticketNumber: string; description: string }) {
+  const { data } = usePolling(() => api.knowledgeSearch(description), [ticketNumber], 0);
+
+  if (!data || data.results.length === 0) return null;
+
+  const similar = data.results.filter((r) => r.source === "ticket" && !r.id.endsWith(ticketNumber)).slice(0, 3);
+  if (similar.length === 0) return null;
+
+  return (
+    <section>
+      <h4>Similar tickets</h4>
+      <ul style={{ margin: 0, padding: "0 0 0 18px", fontSize: 14 }}>
+        {similar.map((r) => (
+          <li key={r.id} style={{ marginBottom: 4 }}>
+            <strong>{r.title}</strong>
+            <span className="muted small"> — relevance {Math.round(r.score * 100)}%</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function TicketDetail({
   number,
   servicenowUrl,
@@ -305,6 +328,8 @@ export function TicketDetail({
                 <p className="pre">{t.description}</p>
               </section>
             )}
+
+            <SimilarTickets ticketNumber={number} description={t.shortDescription} />
 
             <section>
               <h4>Activity</h4>
