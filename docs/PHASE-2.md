@@ -2,10 +2,10 @@
 
 **Project:** RegDash (RegCreate Operations & Automation Dashboard)
 **Phase:** 2 of 4. Live Data & Collaboration
-**Version:** v2.0.0
+**Version:** v2.1.0
 **Owner:** Tanishk
-**Status:** Not started. Phase 1 complete; ServiceNow adapter written but not yet tested against a live instance.
-**Last updated:** 18 Nov 2026
+**Status:** In progress. Phase 2b write methods, real SLA, and auto-refresh complete (mock + unit-tested). Live ServiceNow validation pending write access. Auth/SSO blocked on external teams.
+**Last updated:** 19 Nov 2026
 
 ---
 
@@ -58,10 +58,10 @@ A dashboard connected to live ServiceNow data that the team can act on — comme
 | ID | Requirement | Status |
 |---|---|---|
 | FR-5.1 | Connect to ServiceNow Table API using a service account (or OAuth client) scoped to `incident` + `sc_req_item` | ⏳ |
-| FR-5.2 | Auto-refresh on a configurable interval (default 60s for live, 300s for Excel fallback) | ⏳ |
-| FR-5.3 | Real SLA data from `task_sla` instead of placeholder defaults | ⏳ |
-| FR-5.4 | `pendingSince` from `sys_audit` for accurate pause-time calculation | ⏳ |
-| FR-5.5 | Microsoft Graph download of the SharePoint workbook as an alternative to local/synced copy (FR-4.8 from Phase 1 backlog) | ⏳ |
+| FR-5.2 | Auto-refresh on a configurable interval (default 60s for live, 300s for Excel fallback) | ✅ Source-dependent defaults; frontend reads from `/api/health` |
+| FR-5.3 | Real SLA data from `task_sla` instead of placeholder defaults | ✅ Batch-fetches `task_sla` records; SLA engine uses real stage + AT_RISK refinement |
+| FR-5.4 | `pendingSince` from `sys_audit` for accurate pause-time calculation | ✅ Queries `sys_audit` for ON_HOLD tickets only |
+| FR-5.5 | Microsoft Graph download of the SharePoint workbook as an alternative to local/synced copy (FR-4.8 from Phase 1 backlog) | 📐 Design only (§8); blocked on Azure app registration |
 
 ### Comments and assignments (FR-6.x)
 | ID | Requirement | Status |
@@ -84,10 +84,10 @@ A dashboard connected to live ServiceNow data that the team can act on — comme
 ### Authentication and SSO (FR-8.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-8.1 | SSO login via the company identity provider (SAML or OIDC) | ⏳ |
-| FR-8.2 | Role-based access: Viewer (read-only), Editor (comment + assign), Admin (config) | ⏳ |
-| FR-8.3 | Unauthenticated users are redirected to the login page | ⏳ |
-| FR-8.4 | Session management with secure, HTTP-only cookies | ⏳ |
+| FR-8.1 | SSO login via the company identity provider (SAML or OIDC) | 🔒 Blocked — waiting on identity team app registration |
+| FR-8.2 | Role-based access: Viewer (read-only), Editor (comment + assign), Admin (config) | 🔒 Blocked (depends on FR-8.1) |
+| FR-8.3 | Unauthenticated users are redirected to the login page | 🔒 Blocked (depends on FR-8.1) |
+| FR-8.4 | Session management with secure, HTTP-only cookies | 🔒 Blocked (depends on FR-8.1) |
 
 ---
 
@@ -125,9 +125,9 @@ Phase 2 adds:
 | GET | `/api/tickets.xlsx` | Export filtered list as Excel (with column selection via `?columns=`) | ✅ |
 | GET | `/api/export-columns` | Available columns for export column picker | ✅ |
 | GET | `/api/team` | Team members and writable flag | ✅ |
-| GET | `/api/auth/login` | Initiate SSO flow | ⏳ |
-| GET | `/api/auth/callback` | SSO callback | ⏳ |
-| POST | `/api/auth/logout` | End session | ⏳ |
+| GET | `/api/auth/login` | Initiate SSO flow | 🔒 Blocked |
+| GET | `/api/auth/callback` | SSO callback | 🔒 Blocked |
+| POST | `/api/auth/logout` | End session | 🔒 Blocked |
 
 ---
 
@@ -228,13 +228,13 @@ case "sharepoint":
 
 ## 10. Acceptance criteria
 
-- [ ] Dashboard shows live ServiceNow data, refreshing automatically
-- [ ] A user can add a comment from the detail panel and see it in ServiceNow
-- [ ] A user can reassign a ticket and the change is reflected in both RegDash and ServiceNow
-- [ ] Export as Excel works with column selection
-- [ ] SSO login works; unauthenticated users cannot access the dashboard
-- [ ] All Phase 1 features continue to work (regression)
-- [ ] Typecheck passes; unit and integration tests pass
+- [ ] Dashboard shows live ServiceNow data, refreshing automatically _(pending live write access)_
+- [x] A user can add a comment from the detail panel (mock source; ServiceNow pending live access)
+- [x] A user can reassign a ticket (mock source; ServiceNow pending live access)
+- [x] Export as Excel works with column selection
+- [ ] SSO login works; unauthenticated users cannot access the dashboard _(blocked on identity team)_
+- [x] All Phase 1 features continue to work (regression)
+- [x] Typecheck passes; all 178 tests pass across 3 workspaces
 
 ---
 
