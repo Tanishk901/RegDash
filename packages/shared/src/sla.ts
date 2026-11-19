@@ -105,9 +105,14 @@ export function computeSlaDetail(
   const real = ticket.taskSlaRecords?.find((r) => r.kind === kind);
   const entry = findPolicy(policy, kind, ticket.priority);
   if (real) {
+    let state = real.stage;
+    if (state === "OK" && entry && entry.targetHours > 0 &&
+        real.businessTimeLeftHours / entry.targetHours <= 1 - AT_RISK_THRESHOLD) {
+      state = "AT_RISK";
+    }
     return {
       kind,
-      state: real.stage,
+      state,
       targetHours: entry?.targetHours ?? null,
       elapsedHours: hoursBetween(ticket.createdAt, now),
       available: true,

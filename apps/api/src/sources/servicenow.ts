@@ -1,4 +1,4 @@
-import type { CommentKind, Ticket, TicketStatus, TicketType } from "@regdash/shared";
+import type { CommentKind, SlaState, TaskSlaRecord, Ticket, TicketStatus, TicketType } from "@regdash/shared";
 import type { SourceResult, TicketSource, WritableTicketSource } from "./TicketSource";
 import {
   extractTagged,
@@ -52,6 +52,30 @@ export interface ServiceNowOptions {
 
 const d = (r: SnRecord, f: string) => r[f]?.display_value ?? null;
 const v = (r: SnRecord, f: string) => r[f]?.value ?? null;
+
+function mapSlaKind(slaName: string): "response" | "resolution" | null {
+  const lower = slaName.toLowerCase();
+  if (lower.includes("response")) return "response";
+  if (lower.includes("resolution")) return "resolution";
+  return null;
+}
+
+function mapSlaStage(stage: string): SlaState | null {
+  switch (stage.toLowerCase()) {
+    case "in_progress": return "OK";
+    case "paused": return "PAUSED";
+    case "breached": return "BREACHED";
+    default: return null;
+  }
+}
+
+function parseDurationHours(duration: string | null): number {
+  if (!duration) return 0;
+  const epoch = new Date("1970-01-01T00:00:00Z").getTime();
+  const ts = new Date(duration.replace(" ", "T") + "Z").getTime();
+  if (Number.isNaN(ts)) return 0;
+  return Math.max(0, (ts - epoch) / (60 * 60 * 1000));
+}
 
 /** Journal display text looks like "2026-09-26 10:02:11 - Priya Nair (Work notes)\nNext: ...". */
 function parseJournal(text: string | null): Ticket["updates"] {
@@ -172,6 +196,38 @@ export class ServiceNowSource implements WritableTicketSource {
     return all;
   }
 
+  private async fetchTaskSla(numbers: string[]): Promise<Map<string, TaskSlaRecord[]>> {
+    const map = new Map<string, TaskSlaRecord[]>();
+    if (numbers.length === 0) return map;
+    const url = new URL("/api/now/table/task_sla", this.opts.baseUrl);
+    url.searchParams.set("sysparm_query", `task.numberIN${numbers.join(",")}`);
+    url.searchParams.set("sysparm_fields", "task.number,sla,stage,business_time_left,planned_end_time");
+    url.searchParams.set("sysparm_display_value", "all");
+    url.searchParams.set("sysparm_exclude_reference_link", "true");
+    url.searchParams.set("sysparm_limit", String(numbers.length * 4));
+
+    const res = await this.request("GET", url.pathname + url.search);
+    const body = (await res.json()) as { result: SnRecord[] };
+
+    for (const r of body.result) {
+      const number = d(r, "task.number");
+      const kind = mapSlaKind(d(r, "sla") ?? "");
+      const stage = mapSlaStage(v(r, "stage") ?? "");
+      if (!number || !kind || !stage) continue;
+
+      const record: TaskSlaRecord = {
+        kind,
+        stage,
+        businessTimeLeftHours: parseDurationHours(v(r, "business_time_left")),
+        plannedEndTime: normalizeDate(v(r, "planned_end_time")),
+      };
+      const existing = map.get(number);
+      if (existing) existing.push(record);
+      else map.set(number, [record]);
+    }
+    return map;
+  }
+
   async fetchTickets(): Promise<SourceResult> {
     const [incidents, ritms] = await Promise.all([
       this.fetchTable("incident"),
@@ -195,6 +251,12 @@ export class ServiceNowSource implements WritableTicketSource {
         }
       }
     }
+    const slaMap = await this.fetchTaskSla(tickets.map((t) => t.number));
+    for (const ticket of tickets) {
+      const records = slaMap.get(ticket.number);
+      if (records?.length) ticket.taskSlaRecords = records;
+    }
+
     return { tickets, rejected };
   }
 

@@ -117,7 +117,7 @@ describe("ServiceNowSource", () => {
     const { src, calls } = createTestSource();
     await src.fetchTickets();
     // Both records fetched — index should allow write lookups
-    expect(calls.filter((c) => c.method === "GET")).toHaveLength(2);
+    expect(calls.filter((c) => c.method === "GET")).toHaveLength(3); // incident + sc_req_item + task_sla
     // Verify by attempting a write that requires the index
     await src.addComment("INC0012345", "test", "admin");
     const patch = calls.find((c) => c.method === "PATCH")!;
