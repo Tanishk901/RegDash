@@ -26,6 +26,7 @@ import { TicketTable } from "./components/TicketTable";
 import { ViewsPage } from "./components/ViewsPage";
 import { CustomViewPage } from "./components/CustomViewPage";
 import { Workload } from "./components/Workload";
+import { TriageQueuePage } from "./components/TriageQueuePage";
 import { api, usePolling, type Health } from "./lib/api";
 
 const DEFAULT_REFRESH_MS = 60_000;
@@ -118,6 +119,7 @@ function Shell() {
             <NavLink className={tabClass} to="/tickets">Tickets</NavLink>
             <NavLink className={tabClass} to="/workload">Team workload</NavLink>
             <NavLink className={tabClass} to="/views">Views</NavLink>
+            <NavLink className={tabClass} to="/triage">Triage</NavLink>
             {pinnedViews.data && pinnedViews.data.length > 0 && (
               <>
                 <span className="tab-divider" />
@@ -311,6 +313,7 @@ export function App() {
         <Route path="workload" element={<WorkloadPage />} />
         <Route path="views" element={<ViewsPage />} />
         <Route path="views/:id" element={<CustomViewPage />} />
+        <Route path="triage" element={<TriageQueuePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

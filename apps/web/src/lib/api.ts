@@ -112,6 +112,30 @@ export interface KnowledgeStatus {
   lastIndexedAt: string | null;
 }
 
+export interface TriageItem {
+  id: string;
+  ticketNumber: string;
+  suggestedPriority: string;
+  suggestedCategory: string;
+  suggestedAssignee: string | null;
+  confidence: number;
+  reasoning: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  originalPriority: string;
+  originalAssignee: string | null;
+}
+
+export interface TriageStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  accuracy: number;
+}
+
 export const api = {
   summary: () => get<DashboardSummary>("/api/summary"),
   tickets: (params: URLSearchParams) => get<TicketList>(`/api/tickets?${params}`),
@@ -188,6 +212,26 @@ export const api = {
   knowledgeSearch: (q: string) =>
     get<KnowledgeSearchResponse>(`/api/knowledge/search?q=${encodeURIComponent(q)}`),
   knowledgeStatus: () => get<KnowledgeStatus>("/api/knowledge/status"),
+
+  triageQueue: (status?: string) => {
+    const p = new URLSearchParams();
+    if (status) p.set("status", status);
+    return get<TriageItem[]>(`/api/triage/queue?${p}`);
+  },
+  triageStats: () => get<TriageStats>("/api/triage/stats"),
+  triageRun: () => send<{ triaged: number }>("/api/triage/run", { method: "POST" }),
+  triageApprove: (id: string) =>
+    send<TriageItem>(`/api/triage/${encodeURIComponent(id)}/approve`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    }),
+  triageReject: (id: string) =>
+    send<TriageItem>(`/api/triage/${encodeURIComponent(id)}/reject`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    }),
 };
 
 /** Fetch + poll. Keeps showing the previous data while a reload is in flight. */
