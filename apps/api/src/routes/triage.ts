@@ -46,6 +46,23 @@ export function triageRoutes({ triageEngine, triageStore, ticketStore }: TriageR
     }
   });
 
+  r.put("/bulk", async (req, res) => {
+    const body = z.object({
+      ids: z.array(z.string().uuid()).min(1).max(100),
+      action: z.enum(["approve", "reject"]),
+    }).safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: body.error.flatten().fieldErrors });
+    const { ids, action } = body.data;
+    let processed = 0;
+    for (const id of ids) {
+      const result = action === "approve"
+        ? await triageStore.approve(id, "You")
+        : await triageStore.reject(id, "You");
+      if (result) processed++;
+    }
+    res.json({ processed });
+  });
+
   r.get("/trend", (_req, res) => {
     const all = triageStore.queue();
     const days = 7;

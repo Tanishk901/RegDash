@@ -264,6 +264,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     }),
+  triageBulk: (ids: string[], action: "approve" | "reject") =>
+    send<{ processed: number }>("/api/triage/bulk", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, action }),
+    }),
 
   templates: () => get<EmailTemplateListItem[]>("/api/templates"),
   template: (id: string) => get<EmailTemplateListItem>(`/api/templates/${encodeURIComponent(id)}`),

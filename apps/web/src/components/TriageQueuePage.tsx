@@ -11,7 +11,7 @@ function StatCard({ value, label }: { value: string | number; label: string }) {
   );
 }
 
-function TriageRow({ item, onAction }: { item: TriageItem; onAction: () => void }) {
+function TriageRow({ item, onAction, checked, onToggle }: { item: TriageItem; onAction: () => void; checked: boolean; onToggle: () => void }) {
   const navigate = useNavigate();
   const [acting, setActing] = useState(false);
 
@@ -34,6 +34,11 @@ function TriageRow({ item, onAction }: { item: TriageItem; onAction: () => void 
 
   return (
     <tr>
+      <td>
+        {item.status === "pending" && (
+          <input type="checkbox" checked={checked} onChange={onToggle} aria-label={`Select ${item.ticketNumber}`} />
+        )}
+      </td>
       <td>
         <button className="link" onClick={() => navigate(`/tickets/${item.ticketNumber}`)}>
           {item.ticketNumber}
@@ -74,6 +79,36 @@ export function TriageQueuePage() {
   const trend = usePolling(() => api.triageTrend(), [], 30_000);
   const [running, setRunning] = useState(false);
   const lastRun = useRef(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulking, setBulking] = useState(false);
+
+  const pendingIds = queue.data?.filter((i) => i.status === "pending").map((i) => i.id) ?? [];
+  const allSelected = pendingIds.length > 0 && pendingIds.every((id) => selected.has(id));
+
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(pendingIds));
+  };
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const bulkAction = async (action: "approve" | "reject") => {
+    if (selected.size === 0) return;
+    setBulking(true);
+    try {
+      await api.triageBulk([...selected], action);
+      setSelected(new Set());
+      await Promise.all([queue.reload(), stats.reload()]);
+    } catch { /* */ } finally {
+      setBulking(false);
+    }
+  };
 
   const runTriage = async () => {
     if (Date.now() - lastRun.current < 2000) return;
@@ -127,10 +162,21 @@ export function TriageQueuePage() {
         <p className="muted">No triage suggestions yet. Click "Run triage on new tickets" to generate them.</p>
       )}
 
+      {queue.data && queue.data.length > 0 && selected.size > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "center" }}>
+          <span className="muted small">{selected.size} selected</span>
+          <button onClick={() => bulkAction("approve")} disabled={bulking}>Approve all</button>
+          <button onClick={() => bulkAction("reject")} disabled={bulking}>Reject all</button>
+        </div>
+      )}
+
       {queue.data && queue.data.length > 0 && (
         <table className="triage-table" role="table" aria-label="Triage queue">
           <thead>
             <tr>
+              <th style={{ width: 32 }}>
+                <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all pending" />
+              </th>
               <th>Ticket</th>
               <th>Priority</th>
               <th>Category</th>
@@ -142,7 +188,7 @@ export function TriageQueuePage() {
           </thead>
           <tbody>
             {queue.data.map((item) => (
-              <TriageRow key={item.id} item={item} onAction={refresh} />
+              <TriageRow key={item.id} item={item} onAction={refresh} checked={selected.has(item.id)} onToggle={() => toggleOne(item.id)} />
             ))}
           </tbody>
         </table>
