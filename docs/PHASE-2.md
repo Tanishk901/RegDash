@@ -131,7 +131,92 @@ Phase 2 adds:
 
 ---
 
-## 8. Open questions
+## 8. Microsoft Graph / SharePoint architecture (FR-5.5)
+
+> **Status:** Design only — no code until an Azure app registration is granted.
+
+### Overview
+
+The team's Excel tracker lives on SharePoint. Today, users manually download or OneDrive-sync the file and either point `EXCEL_PATH` at it or upload it through the dashboard. FR-5.5 replaces that manual step with a server-side download via the Microsoft Graph API so the dashboard always reads the latest workbook.
+
+### New source: `apps/api/src/sources/sharepoint.ts`
+
+A thin wrapper that downloads the workbook, writes it to a temp file, and delegates parsing to the existing `ExcelSource`. It implements `TicketSource` (read-only, like `ExcelSource`).
+
+```
+class SharePointSource implements TicketSource {
+  readonly name = "excel";           // same normalised source tag
+
+  constructor(opts: SharePointOptions) { ... }
+
+  async fetchTickets(): Promise<SourceResult> {
+    const workbookPath = await this.downloadWorkbook();
+    const excel = new ExcelSource(workbookPath, this.sheet, this.timeUnit);
+    return excel.fetchTickets();
+  }
+}
+```
+
+### Authentication
+
+OAuth 2.0 client-credential flow via `@azure/identity` (`ClientSecretCredential`):
+
+| Config var | Purpose |
+|---|---|
+| `GRAPH_TENANT_ID` | Azure AD (Entra ID) tenant |
+| `GRAPH_CLIENT_ID` | App registration client ID |
+| `GRAPH_CLIENT_SECRET` | App registration client secret |
+| `SHAREPOINT_SITE_ID` | SharePoint site (or site-relative path) |
+| `SHAREPOINT_DRIVE_PATH` | Path within the document library, e.g. `General/RegCreate Tracker.xlsx` |
+
+The app registration needs the **Files.Read.All** (application) Graph permission scoped to the target site.
+
+### Download flow
+
+```
+1. Acquire token via ClientSecretCredential.getToken("https://graph.microsoft.com/.default")
+2. Resolve drive item:
+     GET /sites/{siteId}/drive/root:/{drivePath}
+     → returns item metadata including @microsoft.graph.downloadUrl
+3. Stream workbook bytes to a temp file
+4. Delegate to ExcelSource for parsing
+```
+
+The download runs once per refresh cycle (every `REFRESH_INTERVAL_SECONDS`). The temp file is overwritten on each cycle, so disk usage stays constant.
+
+### Source factory integration
+
+A new `DATA_SOURCE` value `"sharepoint"` in `config.ts`:
+
+```
+case "sharepoint":
+  return new SharePointSource({
+    tenantId:   cfg.GRAPH_TENANT_ID,
+    clientId:   cfg.GRAPH_CLIENT_ID,
+    clientSecret: cfg.GRAPH_CLIENT_SECRET,
+    siteId:     cfg.SHAREPOINT_SITE_ID,
+    drivePath:  cfg.SHAREPOINT_DRIVE_PATH,
+    sheet:      cfg.EXCEL_SHEET,
+    timeUnit:   cfg.EXCEL_TIME_UNIT,
+  });
+```
+
+### Dependencies
+
+| Package | Purpose |
+|---|---|
+| `@azure/identity` | `ClientSecretCredential` for client-credential OAuth |
+| `@microsoft/microsoft-graph-client` | Type-safe Graph API calls (optional — raw `fetch` with token header also works) |
+
+### Open questions for implementation
+
+1. **Site ID format:** full GUID (`{siteCollectionId},{siteId},{webId}`) vs. hostname path (`contoso.sharepoint.com:/sites/RegCreate`) — depends on the admin's preference.
+2. **Drive vs. drive item ID:** some tenants lock down the Graph `search` endpoint; a direct path is more portable.
+3. **Delta downloads:** Graph supports `@microsoft.graph.downloadUrl` which is a pre-authenticated CDN URL valid for a short window — no need to cache tokens across requests.
+
+---
+
+## 9. Open questions (general)
 
 1. **Service account permissions:** can the existing read-only account be upgraded to allow writes, or do we need a separate account?
 2. **SSO provider:** which identity provider does the company use — Azure AD (Entra ID), Okta, Ping?
@@ -141,7 +226,7 @@ Phase 2 adds:
 
 ---
 
-## 9. Acceptance criteria
+## 10. Acceptance criteria
 
 - [ ] Dashboard shows live ServiceNow data, refreshing automatically
 - [ ] A user can add a comment from the detail panel and see it in ServiceNow
@@ -153,7 +238,7 @@ Phase 2 adds:
 
 ---
 
-## 10. Dependencies
+## 11. Dependencies
 
 | Dependency | Owner | Status |
 |---|---|---|
