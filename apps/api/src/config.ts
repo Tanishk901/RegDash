@@ -16,6 +16,7 @@ const Env = z.object({
   SERVICENOW_USERNAME: z.string().optional(),
   SERVICENOW_PASSWORD: z.string().optional(),
   SERVICENOW_ASSIGNMENT_GROUP: z.string().optional(),
+  SERVICENOW_TEAM_MEMBERS: z.string().optional(),
 });
 
 export type Config = z.infer<typeof Env>;

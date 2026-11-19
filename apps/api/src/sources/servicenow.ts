@@ -46,6 +46,7 @@ export interface ServiceNowOptions {
   username: string;
   password: string;
   assignmentGroup?: string;
+  teamMembers?: string[];
   fetchImpl?: typeof fetch;
 }
 
@@ -217,6 +218,6 @@ export class ServiceNowSource implements WritableTicketSource {
   }
 
   teamMembers(): string[] {
-    return [];
+    return this.opts.teamMembers ?? [];
   }
 }

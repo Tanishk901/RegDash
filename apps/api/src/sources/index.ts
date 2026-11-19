@@ -15,11 +15,14 @@ export function createSource(cfg: Config): TicketSource {
       if (!SERVICENOW_BASE_URL || !SERVICENOW_USERNAME || !SERVICENOW_PASSWORD) {
         throw new Error("DATA_SOURCE=servicenow needs SERVICENOW_BASE_URL, _USERNAME and _PASSWORD");
       }
+      const teamMembers = cfg.SERVICENOW_TEAM_MEMBERS
+        ?.split(",").map((s) => s.trim()).filter(Boolean);
       return new ServiceNowSource({
         baseUrl: SERVICENOW_BASE_URL,
         username: SERVICENOW_USERNAME,
         password: SERVICENOW_PASSWORD,
         assignmentGroup: cfg.SERVICENOW_ASSIGNMENT_GROUP,
+        teamMembers,
       });
     }
   }
