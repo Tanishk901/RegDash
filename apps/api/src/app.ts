@@ -10,8 +10,9 @@ import { suggestionsRoutes, type SuggestionsRouteOptions } from "./routes/sugges
 import { triageRoutes, type TriageRouteOptions } from "./routes/triage";
 import { templateRoutes } from "./routes/templates";
 import type { TemplateStore } from "./email/TemplateStore";
+import type { EmailService } from "./email/EmailService";
 
-export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions; triageStore?: RouteOptions["triageStore"]; templateStore?: TemplateStore } = {}) {
+export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions; triageStore?: RouteOptions["triageStore"]; templateStore?: TemplateStore; emailService?: EmailService } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(cors({ origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] }));
@@ -22,6 +23,16 @@ export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?:
   if (opts.suggestions) app.use("/api/tickets", suggestionsRoutes(opts.suggestions));
   if (opts.triage) app.use("/api/triage", triageRoutes(opts.triage));
   if (opts.templateStore) app.use("/api/templates", templateRoutes(opts.templateStore));
+  if (opts.emailService) {
+    app.post("/api/email/send", async (req, res, next) => {
+      try {
+        const { to, subject, body } = req.body;
+        if (!to || !subject) return res.status(400).json({ error: "to and subject are required" });
+        const result = await opts.emailService!.send({ to, subject, body: body ?? "" });
+        res.json(result);
+      } catch (err) { next(err); }
+    });
+  }
   app.use((_req, res) => res.status(404).json({ error: "Not found" }));
   // Express recognises an error handler by its four arguments, so _next has to stay.
   app.use((err: Error & { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {

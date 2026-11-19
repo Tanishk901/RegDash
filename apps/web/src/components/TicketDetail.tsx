@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { STATUSES, formatDuration, formatEffort, slaDueAt, type TicketStatus, type TicketView } from "@regdash/shared";
 import { api, serviceNowLink, usePolling, type TeamInfo } from "../lib/api";
 import { PriorityBadge, SlaBadge, SlaDetailBadge, StatusBadge, TypeTag, statusLabel } from "./Badges";
+import { EmailComposeModal } from "./EmailComposeModal";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { SuggestionsPanel } from "./SuggestionsPanel";
 
@@ -177,6 +178,7 @@ export function TicketDetail({
   const { data: t, error, reload } = usePolling(() => api.ticket(number), [number]);
   const { data: team } = usePolling(() => api.team(), []);
   const snLink = servicenowUrl ? serviceNowLink(servicenowUrl, number) : null;
+  const [showEmail, setShowEmail] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -205,6 +207,7 @@ export function TicketDetail({
                 Open in ServiceNow ↗
               </a>
             )}
+            <button onClick={() => setShowEmail(true)}>Email</button>
             <button className="icon" onClick={onClose} aria-label="Close">×</button>
           </div>
         </header>
@@ -325,6 +328,7 @@ export function TicketDetail({
           </div>
         )}
       </aside>
+      {showEmail && <EmailComposeModal ticketNumber={number} onClose={() => setShowEmail(false)} />}
     </>
   );
 }
