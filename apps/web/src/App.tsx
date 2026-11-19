@@ -23,6 +23,8 @@ import { SourceStatus } from "./components/SourceStatus";
 import { SummaryCards } from "./components/SummaryCards";
 import { TicketDetail } from "./components/TicketDetail";
 import { TicketTable } from "./components/TicketTable";
+import { ViewsPage } from "./components/ViewsPage";
+import { CustomViewPage } from "./components/CustomViewPage";
 import { Workload } from "./components/Workload";
 import { api, usePolling, type Health } from "./lib/api";
 
@@ -114,6 +116,7 @@ function Shell() {
             <NavLink className={tabClass} to="/" end>Dashboard</NavLink>
             <NavLink className={tabClass} to="/tickets">Tickets</NavLink>
             <NavLink className={tabClass} to="/workload">Team workload</NavLink>
+            <NavLink className={tabClass} to="/views">Views</NavLink>
           </nav>
           <div className="meta">
             {h && <SourceStatus health={h} />}
@@ -297,6 +300,8 @@ export function App() {
         <Route index element={<DashboardPage />} />
         <Route path="tickets/:number?" element={<TicketsPage />} />
         <Route path="workload" element={<WorkloadPage />} />
+        <Route path="views" element={<ViewsPage />} />
+        <Route path="views/:id" element={<CustomViewPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
