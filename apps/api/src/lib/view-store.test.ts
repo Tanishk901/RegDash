@@ -41,11 +41,11 @@ describe("ViewStore", () => {
 
   it("lists all views", () => {
     expect(store.list()).toHaveLength(1);
-    expect(store.list()[0].name).toBe("My P1s");
+    expect(store.list()[0]!.name).toBe("My P1s");
   });
 
   it("gets a view by id", () => {
-    const id = store.list()[0].id;
+    const id = store.list()[0]!.id;
     expect(store.get(id)?.name).toBe("My P1s");
   });
 
@@ -54,7 +54,7 @@ describe("ViewStore", () => {
   });
 
   it("updates a view", async () => {
-    const id = store.list()[0].id;
+    const id = store.list()[0]!.id;
     const updated = await store.update(id, { name: "Renamed" });
     expect(updated?.name).toBe("Renamed");
     expect(updated?.id).toBe(id);
@@ -65,7 +65,7 @@ describe("ViewStore", () => {
   });
 
   it("filters by pinned", async () => {
-    const id = store.list()[0].id;
+    const id = store.list()[0]!.id;
     expect(store.list(true)).toHaveLength(0);
     await store.update(id, { pinned: true });
     expect(store.list(true)).toHaveLength(1);
@@ -73,7 +73,7 @@ describe("ViewStore", () => {
   });
 
   it("deletes a view", async () => {
-    const id = store.list()[0].id;
+    const id = store.list()[0]!.id;
     expect(await store.remove(id)).toBe(true);
     expect(store.list()).toHaveLength(0);
   });
@@ -96,6 +96,6 @@ describe("ViewStore", () => {
     const store2 = new ViewStore(path.join(dir, "views.json"));
     await store2.restore();
     expect(store2.list()).toHaveLength(1);
-    expect(store2.list()[0].name).toBe("Persistent");
+    expect(store2.list()[0]!.name).toBe("Persistent");
   });
 });

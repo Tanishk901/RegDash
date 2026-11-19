@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { DashboardSummary, SourceReading, TicketView } from "@regdash/shared";
+import type { DashboardSummary, SavedView, SavedViewInput, SourceReading, TicketView } from "@regdash/shared";
 
 export interface TicketList {
   items: TicketView[];
@@ -102,6 +102,27 @@ export const api = {
       body: file,
     }),
   removeUpload: () => send<RemoveUploadResult>("/api/upload", { method: "DELETE" }),
+
+  views: (opts?: { pinned?: boolean }) => {
+    const p = new URLSearchParams();
+    if (opts?.pinned !== undefined) p.set("pinned", String(opts.pinned));
+    return get<SavedView[]>(`/api/views?${p}`);
+  },
+  view: (id: string) => get<SavedView>(`/api/views/${encodeURIComponent(id)}`),
+  createView: (input: SavedViewInput) =>
+    send<SavedView>("/api/views", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  updateView: (id: string, input: Partial<SavedViewInput>) =>
+    send<SavedView>(`/api/views/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  deleteView: (id: string) =>
+    send<{ ok: boolean }>(`/api/views/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
   addComment: (number: string, note: string, by: string, kind?: "work_note" | "customer_comment") =>
     send<TicketView>(`/api/tickets/${encodeURIComponent(number)}/comments`, {
