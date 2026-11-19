@@ -25,7 +25,7 @@ import { TicketTable } from "./components/TicketTable";
 import { Workload } from "./components/Workload";
 import { api, usePolling, type Health } from "./lib/api";
 
-const REFRESH_MS = 60_000;
+const DEFAULT_REFRESH_MS = 60_000;
 
 /** What the pages get from the shell, which owns the polling so it carries on across navigation. */
 interface Shared {
@@ -33,6 +33,7 @@ interface Shared {
   health: Health | null;
   apiError: string | null;
   reloadAll: () => Promise<void>;
+  refreshMs: number;
 }
 
 const useShared = () => useOutletContext<Shared>();
@@ -46,8 +47,9 @@ function Shell() {
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
-  const summary = usePolling(() => api.summary(), [], REFRESH_MS);
-  const health = usePolling(() => api.health(), [], REFRESH_MS);
+  const health = usePolling(() => api.health(), [], DEFAULT_REFRESH_MS);
+  const refreshMs = (health.data?.refreshIntervalSeconds ?? 60) * 1000;
+  const summary = usePolling(() => api.summary(), [], refreshMs);
 
   // Start each page at the top. Opening a ticket stays in the same section, so the list keeps its place.
   const section = pathname.split("/")[1];
@@ -94,7 +96,7 @@ function Shell() {
 
   const h = health.data;
   const last = summary.data?.lastRefreshedAt;
-  const shared: Shared = { summary: summary.data, health: h, apiError: summary.error, reloadAll: async () => { await reloadAll(); } };
+  const shared: Shared = { summary: summary.data, health: h, apiError: summary.error, reloadAll: async () => { await reloadAll(); }, refreshMs };
 
   return (
     <>
@@ -218,7 +220,7 @@ function DashboardPage() {
 }
 
 function TicketsPage() {
-  const { summary, health, apiError, reloadAll } = useShared();
+  const { summary, health, apiError, reloadAll, refreshMs } = useShared();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -226,7 +228,7 @@ function TicketsPage() {
 
   const paramKey = params.toString();
   // Also reloads as soon as the API has new data, so the list never lags the header.
-  const list = usePolling(() => api.tickets(new URLSearchParams(paramKey)), [paramKey, summary?.lastRefreshedAt], REFRESH_MS);
+  const list = usePolling(() => api.tickets(new URLSearchParams(paramKey)), [paramKey, summary?.lastRefreshedAt], refreshMs);
 
   // Filters live in the URL so a filtered view can be shared as a link.
   const update = useCallback(

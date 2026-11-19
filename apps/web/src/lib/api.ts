@@ -18,6 +18,7 @@ export interface Health {
   reading: SourceReading | null;
   /** Set when SERVICENOW_BASE_URL is configured; enables "Open in ServiceNow" links. */
   servicenowUrl: string | null;
+  refreshIntervalSeconds: number | null;
   /** Set while a workbook uploaded from the dashboard is the live source. */
   upload: { fileName: string; uploadedAt: string } | null;
 }
