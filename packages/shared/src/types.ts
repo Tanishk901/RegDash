@@ -196,3 +196,28 @@ export interface SavedView {
 }
 
 export type SavedViewInput = Omit<SavedView, "id" | "createdAt" | "updatedAt">;
+
+/* ── Email templates (Phase 3) ── */
+
+export type EmailTemplateKind = "acknowledgement" | "reminder" | "escalation" | "welcome" | "follow_up" | "custom";
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  kind: EmailTemplateKind;
+  subject: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type EmailTemplateInput = Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">;
+
+export const EMAIL_TEMPLATE_KINDS: EmailTemplateKind[] = [
+  "acknowledgement",
+  "reminder",
+  "escalation",
+  "welcome",
+  "follow_up",
+  "custom",
+];
