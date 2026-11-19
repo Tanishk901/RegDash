@@ -27,6 +27,7 @@ import { ViewsPage } from "./components/ViewsPage";
 import { CustomViewPage } from "./components/CustomViewPage";
 import { Workload } from "./components/Workload";
 import { TriageQueuePage } from "./components/TriageQueuePage";
+import { TemplatesPage } from "./components/TemplatesPage";
 import { GlobalSearch } from "./components/GlobalSearch";
 import { ShortcutHelp } from "./components/ShortcutHelp";
 import { api, usePolling, type Health } from "./lib/api";
@@ -122,6 +123,7 @@ function Shell() {
             <NavLink className={tabClass} to="/workload">Team workload</NavLink>
             <NavLink className={tabClass} to="/views">Views</NavLink>
             <NavLink className={tabClass} to="/triage">Triage</NavLink>
+            <NavLink className={tabClass} to="/templates">Templates</NavLink>
             {pinnedViews.data && pinnedViews.data.length > 0 && (
               <>
                 <span className="tab-divider" />
@@ -318,6 +320,7 @@ export function App() {
         <Route path="views" element={<ViewsPage />} />
         <Route path="views/:id" element={<CustomViewPage />} />
         <Route path="triage" element={<TriageQueuePage />} />
+        <Route path="templates" element={<TemplatesPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
