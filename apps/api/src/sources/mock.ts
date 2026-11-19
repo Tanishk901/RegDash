@@ -1,5 +1,5 @@
-import { DEFAULT_SLA_HOURS } from "@regdash/shared";
-import type { ApplicationCode, CommentKind, Environment, Priority, Ticket, TicketStatus, TicketType, TicketUpdate } from "@regdash/shared";
+import { DEFAULT_SLA_HOURS, RESPONSE_SLA_HOURS } from "@regdash/shared";
+import type { ApplicationCode, CommentKind, Environment, Priority, SlaState, TaskSlaRecord, Ticket, TicketStatus, TicketType, TicketUpdate } from "@regdash/shared";
 import type { SourceResult, WritableTicketSource } from "./TicketSource";
 
 /**
@@ -117,6 +117,18 @@ export function generateMockTickets(count = 42, seed = 20260927, now = new Date(
     // Most tickets get a time-per-task estimate; about half also cover several items.
     const taskHours = rand() < 0.8 ? pick(rand, [0.25, 0.5, 1, 2, 4] as const) : null;
     const itemCount = rand() < 0.5 ? pick(rand, [1, 5, 12, 36] as const) : null;
+
+    const taskSlaRecords: TaskSlaRecord[] | undefined = rand() < 0.6 ? (() => {
+      const resTarget = DEFAULT_SLA_HOURS[priority];
+      const respTarget = RESPONSE_SLA_HOURS[priority];
+      const stage = (target: number): SlaState =>
+        onHold ? "PAUSED" : ageHours >= target ? "BREACHED" : ageHours / target >= 0.75 ? "AT_RISK" : "OK";
+      return [
+        { kind: "response" as const, stage: stage(respTarget), businessTimeLeftHours: Math.max(0, respTarget - ageHours), plannedEndTime: new Date(createdAt.getTime() + respTarget * HOUR).toISOString() },
+        { kind: "resolution" as const, stage: stage(resTarget), businessTimeLeftHours: Math.max(0, resTarget - ageHours), plannedEndTime: new Date(createdAt.getTime() + resTarget * HOUR).toISOString() },
+      ];
+    })() : undefined;
+
     tickets.push({
       number: type === "INCIDENT" ? `INC00${incNo++}` : `RITM000${ritmNo++}`,
       type,
@@ -137,6 +149,7 @@ export function generateMockTickets(count = 42, seed = 20260927, now = new Date(
       taskHours,
       itemCount,
       updates,
+      taskSlaRecords,
       source: "mock",
       application: weightedApplication(rand),
       environment: weightedEnvironment(rand),
