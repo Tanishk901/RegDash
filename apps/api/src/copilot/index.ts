@@ -5,3 +5,6 @@ export { MockLlmProvider } from "./MockLlmProvider";
 export { MockEmbeddingProvider } from "./MockEmbeddingProvider";
 export { InMemoryKnowledgeStore } from "./InMemoryKnowledgeStore";
 export { KnowledgeIndexer } from "./KnowledgeIndexer";
+export { FeedbackStore } from "./FeedbackStore";
+export { TriageEngine, type TriageSuggestion } from "./TriageEngine";
+export { TriageStore } from "./TriageStore";
