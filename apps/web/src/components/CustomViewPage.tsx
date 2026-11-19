@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { SavedView, SavedViewInput } from "@regdash/shared";
 import { api, usePolling } from "../lib/api";
@@ -38,6 +38,18 @@ export function CustomViewPage() {
   );
 
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  const copyLink = () => {
+    void navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+  };
 
   const handleSave = useCallback(
     async (input: SavedViewInput) => {
@@ -78,6 +90,7 @@ export function CustomViewPage() {
           <button className={`link${v.pinned ? " is-set" : ""}`} onClick={handleTogglePin}>
             {v.pinned ? "Unpin" : "Pin"}
           </button>
+          <button className="link" onClick={copyLink}>{copied ? "Copied!" : "Copy link"}</button>
           <button className="button" onClick={() => setEditing(true)}>Edit</button>
           <button className="link" onClick={() => navigate("/views")}>Back to views</button>
         </div>
