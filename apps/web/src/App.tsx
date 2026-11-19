@@ -240,6 +240,8 @@ function TicketsPage() {
     [params, setParams],
   );
 
+  const columnKeys = params.get("columns")?.split(",").filter(Boolean);
+
   const open = (n: string) => navigate({ pathname: `/tickets/${n}`, search: location.search });
   const close = useCallback(() => navigate({ pathname: "/tickets", search: location.search }), [navigate, location.search]);
 
@@ -258,7 +260,7 @@ function TicketsPage() {
         {!!list.data?.total && <ExportMenu params={params} />}
       </div>
 
-      {list.data && <TicketTable items={list.data.items} selected={number} onOpen={open} />}
+      {list.data && <TicketTable items={list.data.items} columns={columnKeys ?? undefined} selected={number} onOpen={open} />}
 
       {number && (
         <TicketDetail
