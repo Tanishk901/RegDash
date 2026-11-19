@@ -127,7 +127,7 @@ export function mapRecord(r: SnRecord, type: TicketType): { ticket?: Ticket; rea
       requestedBy: normalizeText(d(r, "caller_id") ?? d(r, "requested_for") ?? d(r, "opened_by")),
       createdAt,
       updatedAt: normalizeDate(v(r, "sys_updated_on")) ?? createdAt,
-      pendingSince: null, // needs sys_audit history — Phase 1.1
+      pendingSince: null, // enriched from sys_audit in fetchTickets()
       slaDueAt: normalizeDate(v(r, "due_date")),
       // Hand-entered in the Excel tracker only; no known ServiceNow field holds these.
       taskHours: null,
@@ -228,6 +228,26 @@ export class ServiceNowSource implements WritableTicketSource {
     return map;
   }
 
+  private async fetchPendingSince(sysIds: string[]): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (sysIds.length === 0) return map;
+    const url = new URL("/api/now/table/sys_audit", this.opts.baseUrl);
+    url.searchParams.set("sysparm_query",
+      `documentkeyIN${sysIds.join(",")}^fieldname=state^newvalue=3^ORDERBYDESCsys_created_on`);
+    url.searchParams.set("sysparm_fields", "documentkey,sys_created_on");
+    url.searchParams.set("sysparm_limit", String(sysIds.length));
+
+    const res = await this.request("GET", url.pathname + url.search);
+    const body = (await res.json()) as { result: SnRecord[] };
+
+    for (const r of body.result) {
+      const docKey = v(r, "documentkey");
+      const createdOn = normalizeDate(v(r, "sys_created_on"));
+      if (docKey && createdOn && !map.has(docKey)) map.set(docKey, createdOn);
+    }
+    return map;
+  }
+
   async fetchTickets(): Promise<SourceResult> {
     const [incidents, ritms] = await Promise.all([
       this.fetchTable("incident"),
@@ -255,6 +275,19 @@ export class ServiceNowSource implements WritableTicketSource {
     for (const ticket of tickets) {
       const records = slaMap.get(ticket.number);
       if (records?.length) ticket.taskSlaRecords = records;
+    }
+
+    const onHoldSysIds = tickets
+      .filter((t) => t.status === "ON_HOLD")
+      .map((t) => this.recordIndex.get(t.number)?.sysId)
+      .filter((id): id is string => !!id);
+    if (onHoldSysIds.length > 0) {
+      const pendingMap = await this.fetchPendingSince(onHoldSysIds);
+      for (const ticket of tickets) {
+        if (ticket.status !== "ON_HOLD") continue;
+        const rec = this.recordIndex.get(ticket.number);
+        if (rec) ticket.pendingSince = pendingMap.get(rec.sysId) ?? null;
+      }
     }
 
     return { tickets, rejected };
