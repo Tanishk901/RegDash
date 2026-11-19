@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.1.0 — Phase 2b (2026-11-19)
+
+### ServiceNow write-back
+- `WritableTicketSource` interface: `addComment`, `updateAssignment`, `updateStatus`
+- `ServiceNowSource` implements all three write methods via PATCH to Table API
+- `request()` HTTP helper with auth, timeout, and error handling
+- `recordIndex` map for ticket-number-to-sys_id lookups
+- `teamMembers()` driven by `SERVICENOW_TEAM_MEMBERS` env var
+- 14 new ServiceNow source tests (16 total, up from 2)
+
+### Real SLA and pending time
+- `TaskSlaRecord` type on `Ticket` for real `task_sla` stage data
+- SLA engine uses real stage + AT_RISK refinement from remaining business time
+- ServiceNow source batch-fetches `task_sla` records after ticket fetch
+- Mock source generates synthetic `taskSlaRecords` (~60% of tickets)
+- `pendingSince` queried from `sys_audit` for ON_HOLD tickets
+
+### Auto-refresh
+- Refresh interval is source-dependent: 60s (servicenow), 300s (excel/mock)
+- Interval exposed via `/api/health` → `refreshIntervalSeconds`
+- Frontend reads interval from health endpoint instead of hardcoded constant
+
+### Documentation
+- FR-6.2 (edit comment) marked as won't-do — ServiceNow journals are append-only
+- Microsoft Graph / SharePoint architecture documented (FR-5.5, design only)
+- FR status table updated; FR-8.x (auth/SSO) marked blocked on external teams
+
 ## 2.0.0 — Phase 2a (2026-11-19)
 
 ### Shared types
