@@ -69,6 +69,10 @@ export function ticketRoutes(store: TicketStore, { now = () => new Date(), servi
       servicenowUrl: servicenowUrl ?? null,
       refreshIntervalSeconds: refreshIntervalSeconds ?? null,
       upload: upload?.current() ?? null,
+      copilot: {
+        enabled: true,
+        triage: !!triageStore,
+      },
     });
   });
 
