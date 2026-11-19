@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { SavedView, SavedViewInput } from "@regdash/shared";
 import { api, usePolling } from "../lib/api";
+import { ExportMenu } from "./ExportMenu";
 import { TicketTable } from "./TicketTable";
 import { TicketDetail } from "./TicketDetail";
 import { ViewBuilder } from "./ViewBuilder";
@@ -104,6 +105,9 @@ export function CustomViewPage() {
         <span>
           {tickets.data ? `${tickets.data.total} ticket${tickets.data.total === 1 ? "" : "s"}` : "Loading…"}
         </span>
+        {!!tickets.data?.total && (
+          <ExportMenu params={filtersToParams(v)} defaultColumns={v.columns} />
+        )}
       </div>
 
       {tickets.data && (
