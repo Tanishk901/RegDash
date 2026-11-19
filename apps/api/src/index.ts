@@ -2,6 +2,7 @@ import { createApp } from "./app";
 import { loadConfig } from "./config";
 import { TicketStore } from "./lib/store";
 import { TrackerUpload } from "./lib/upload";
+import { ViewStore } from "./lib/view-store";
 import { createSource } from "./sources";
 
 const cfg = loadConfig();
@@ -12,12 +13,14 @@ const upload = new TrackerUpload(store, configured, {
   sheetName: cfg.EXCEL_SHEET,
   timeUnit: cfg.EXCEL_TIME_UNIT,
 });
+const viewStore = new ViewStore(cfg.VIEWS_PATH);
 
 await upload.restore();
+await viewStore.restore();
 await store.refresh();
 store.startAutoRefresh(cfg.REFRESH_INTERVAL_SECONDS);
 
-createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS }).listen(cfg.PORT, () => {
+createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS }).listen(cfg.PORT, () => {
   console.log(
     `RegDash API on http://localhost:${cfg.PORT}  source=${upload.current() ? "upload" : cfg.DATA_SOURCE}  tickets=${store.all().length}` +
       (store.lastError ? `  (last error: ${store.lastError})` : ""),

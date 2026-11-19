@@ -12,6 +12,8 @@ const Env = z.object({
   /** Where a workbook uploaded from the dashboard is kept. Must stay git-ignored. */
   EXCEL_UPLOAD_PATH: z.string().default("../../data/uploaded-tracker.xlsx"),
 
+  VIEWS_PATH: z.string().default("../../data/views.json"),
+
   SERVICENOW_BASE_URL: z.string().optional(),
   SERVICENOW_USERNAME: z.string().optional(),
   SERVICENOW_PASSWORD: z.string().optional(),
