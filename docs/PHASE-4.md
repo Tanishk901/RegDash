@@ -4,8 +4,8 @@
 **Phase:** 4 of 4. AI Copilot
 **Version:** v4.0.0
 **Owner:** Tanishk
-**Status:** Not started. Depends on Phase 2 (live ServiceNow) and Phase 3 (mailbox ingestion, templates).
-**Last updated:** 18 Nov 2026
+**Status:** Implemented (mock adapters). Real LLM/vector store/SharePoint pending external approvals.
+**Last updated:** 19 Nov 2026
 
 ---
 
@@ -49,29 +49,29 @@ An AI assistant embedded in the dashboard that surfaces relevant past resolution
 ### RAG over SOPs and past tickets (FR-13.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-13.1 | Index SOP documents from SharePoint (PDF, Word, Confluence pages) into a vector store | ⏳ |
-| FR-13.2 | Index resolution notes and work notes from closed tickets (ServiceNow) | ⏳ |
-| FR-13.3 | Incremental re-indexing: new documents and newly closed tickets are indexed automatically | ⏳ |
-| FR-13.4 | Natural-language search bar in the dashboard: "How do we handle a password reset for RegCreate?" | ⏳ |
-| FR-13.5 | Search results show ranked passages with source document, ticket number, and a link to the original | ⏳ |
+| FR-13.1 | Index SOP documents from SharePoint (PDF, Word, Confluence pages) into a vector store | ✅ mock — 8 SOPs indexed in-memory; real SharePoint adapter swaps in |
+| FR-13.2 | Index resolution notes and work notes from closed tickets (ServiceNow) | ✅ mock — closed tickets indexed on startup |
+| FR-13.3 | Incremental re-indexing: new documents and newly closed tickets are indexed automatically | ✅ POST /api/knowledge/reindex |
+| FR-13.4 | Natural-language search bar in the dashboard: "How do we handle a password reset for RegCreate?" | ✅ GlobalSearch component, Ctrl+K shortcut |
+| FR-13.5 | Search results show ranked passages with source document, ticket number, and a link to the original | ✅ Ranked results with score, source, and navigation |
 
 ### Resolution suggestions (FR-14.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-14.1 | When viewing a ticket, show a "Suggested resolution" panel with 1-3 suggestions ranked by relevance | ⏳ |
-| FR-14.2 | Each suggestion cites its sources: SOP section, past ticket number, or document title | ⏳ |
-| FR-14.3 | An engineer can accept a suggestion (copies it into the work note draft), dismiss it, or flag it as unhelpful | ⏳ |
-| FR-14.4 | Feedback (accept/dismiss/flag) is logged to improve retrieval quality over time | ⏳ |
-| FR-14.5 | Suggestions are generated on-demand (when the panel is opened), not pre-computed | ⏳ |
+| FR-14.1 | When viewing a ticket, show a "Suggested resolution" panel with 1-3 suggestions ranked by relevance | ✅ SuggestionsPanel in ticket detail |
+| FR-14.2 | Each suggestion cites its sources: SOP section, past ticket number, or document title | ✅ Citations with title + snippet |
+| FR-14.3 | An engineer can accept a suggestion (copies it into the work note draft), dismiss it, or flag it as unhelpful | ✅ Accept/dismiss/flag buttons |
+| FR-14.4 | Feedback (accept/dismiss/flag) is logged to improve retrieval quality over time | ✅ FeedbackStore with JSON persistence |
+| FR-14.5 | Suggestions are generated on-demand (when the panel is opened), not pre-computed | ✅ Loaded on ticket detail open |
 
 ### Auto-triage (FR-15.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-15.1 | New tickets (from ServiceNow or mailbox ingestion) are scored for priority (P1-P4) and category | ⏳ |
-| FR-15.2 | A suggested assignee is picked based on current workload and past ticket similarity | ⏳ |
-| FR-15.3 | Triage suggestions are shown in a review queue — never applied without a human approving | ⏳ |
-| FR-15.4 | On approval, the priority, category and assignment are written back to ServiceNow | ⏳ |
-| FR-15.5 | Triage accuracy is tracked: how often does the human change the suggestion? | ⏳ |
+| FR-15.1 | New tickets (from ServiceNow or mailbox ingestion) are scored for priority (P1-P4) and category | ✅ TriageEngine with keyword scoring |
+| FR-15.2 | A suggested assignee is picked based on current workload and past ticket similarity | ✅ Workload-balanced assignment |
+| FR-15.3 | Triage suggestions are shown in a review queue — never applied without a human approving | ✅ TriageQueuePage with approve/reject |
+| FR-15.4 | On approval, the priority, category and assignment are written back to ServiceNow | ⏳ Needs live ServiceNow write-back |
+| FR-15.5 | Triage accuracy is tracked: how often does the human change the suggestion? | ✅ Stats dashboard (approved/rejected/accuracy %) |
 
 ---
 

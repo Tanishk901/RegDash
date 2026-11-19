@@ -1,5 +1,51 @@
 # Changelog
 
+## 4.0.0 — Phase 4: Support Copilot (2026-11-19)
+
+### RAG pipeline + knowledge store (FR-13.x)
+
+- `EmbeddingProvider` interface + `MockEmbeddingProvider` (deterministic fake vectors)
+- `LlmProvider` interface + `MockLlmProvider` (keyword-matched canned answers)
+- `KnowledgeStore` interface with cosine-similarity search
+- `InMemoryKnowledgeStore` — JSON persistence with safe-write pattern
+- `KnowledgeIndexer` — indexes 8 mock SOPs + closed ticket notes on startup
+- `GET /api/knowledge/search?q=` — NL search with ranked results and sources
+- `GET /api/knowledge/status` — index stats (chunk count, by source, last indexed)
+- `POST /api/knowledge/reindex` — manual re-index trigger
+- Config: `KNOWLEDGE_PATH`, `LLM_PROVIDER`, `EMBEDDING_PROVIDER`
+
+### Resolution suggestions (FR-14.x)
+
+- `GET /api/tickets/:number/suggestions` — 1-2 suggestions with cited sources
+- `POST /api/tickets/:number/suggestions/:id/feedback` — accept/dismiss/flag
+- `FeedbackStore` — tracks feedback with JSON persistence
+- `SuggestionsPanel` component in ticket detail — collapsible, source citations, action buttons
+- Existing feedback shown on suggestion cards (accepted/dismissed/flagged badge)
+
+### Auto-triage (FR-15.x)
+
+- `TriageEngine` — keyword-based priority/category scoring + workload-balanced assignment
+- `TriageStore` — queue persistence (pending/approved/rejected) with JSON safe-write
+- `GET /api/triage/queue` — list triage suggestions (filterable by status)
+- `GET /api/triage/stats` — total/pending/approved/rejected/accuracy
+- `POST /api/triage/run` — run triage on new tickets
+- `PUT /api/triage/:id/approve` and `PUT /api/triage/:id/reject`
+- `TriageQueuePage` — table with approve/reject, stats dashboard, reasoning details
+- Triage nav tab in shell header
+
+### Global search (FR-13.4)
+
+- `GlobalSearch` component in shell header
+- Ctrl+K keyboard shortcut to focus search
+- Debounced NL query (300ms) with results dropdown
+- Keyboard navigation (arrows, Enter, Escape)
+- Ticket results navigate to detail; SOP results search ticket list
+
+### Tests
+
+- 16 unit tests: MockEmbeddingProvider, MockLlmProvider, InMemoryKnowledgeStore, KnowledgeIndexer, FeedbackStore, TriageEngine, TriageStore
+- 11 integration tests: knowledge search/status/reindex, suggestions/feedback, triage queue/run/approve
+
 ## 3.0.0 — Phase 3: Custom Dashboard Builder (2026-11-19)
 
 ### Custom views (FR-12.x)
