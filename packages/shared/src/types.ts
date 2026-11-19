@@ -177,3 +177,6 @@ export interface DashboardSummary {
 export const OPEN_STATUSES: TicketStatus[] = ["NEW", "IN_PROGRESS", "ON_HOLD"];
 export const PRIORITIES: Priority[] = ["P1", "P2", "P3", "P4"];
 export const STATUSES: TicketStatus[] = ["NEW", "IN_PROGRESS", "ON_HOLD", "RESOLVED", "CLOSED"];
+
+export type GroupByField = "assignedTo" | "priority" | "status" | "type" | "sla" | "application" | "environment";
+export const GROUP_BY_FIELDS: GroupByField[] = ["assignedTo", "priority", "status", "type", "sla", "application", "environment"];
