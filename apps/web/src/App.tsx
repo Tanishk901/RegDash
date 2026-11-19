@@ -28,6 +28,7 @@ import { CustomViewPage } from "./components/CustomViewPage";
 import { Workload } from "./components/Workload";
 import { TriageQueuePage } from "./components/TriageQueuePage";
 import { GlobalSearch } from "./components/GlobalSearch";
+import { ShortcutHelp } from "./components/ShortcutHelp";
 import { api, usePolling, type Health } from "./lib/api";
 
 const DEFAULT_REFRESH_MS = 60_000;
@@ -190,6 +191,7 @@ function Shell() {
 
       <Outlet context={shared} />
       </main>
+      <ShortcutHelp />
     </>
   );
 }

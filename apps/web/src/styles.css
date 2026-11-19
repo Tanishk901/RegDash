@@ -606,3 +606,20 @@ button.icon:hover:not(:disabled) { background: var(--surface-2); border-radius: 
 .search-result-title { font-weight: 600; font-size: .9rem; }
 .search-result-snippet { font-size: .8rem; color: var(--muted); margin-top: 2px; }
 .search-result-meta { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+
+/* ── Keyboard shortcut help ── */
+.shortcut-dialog {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 22;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px 28px; box-shadow: var(--shadow-raised); min-width: 320px;
+}
+.shortcut-dialog h3 { margin: 0 0 14px; font-size: 16px; }
+.shortcut-dialog table { width: 100%; border-collapse: collapse; }
+.shortcut-dialog td { padding: 6px 0; font-size: 14px; }
+.shortcut-dialog td:first-child { padding-right: 20px; white-space: nowrap; }
+.shortcut-dialog kbd {
+  display: inline-block; padding: 2px 7px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--surface-2); font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  font-size: 12px; font-weight: 600;
+}
+.shortcut-dialog button { margin-top: 12px; }
