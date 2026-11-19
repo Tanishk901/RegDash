@@ -199,7 +199,8 @@ function Shell() {
 }
 
 function DashboardPage() {
-  const { summary, health } = useShared();
+  const { summary, health, refreshMs } = useShared();
+  const feedbackStats = usePolling(() => api.feedbackStats(), [], refreshMs);
   const [params] = useSearchParams();
 
   // Links saved before the pages were split carried the view and filters on "/".
@@ -236,6 +237,28 @@ function DashboardPage() {
         </div>
       </div>
       <SummaryCards summary={summary} />
+
+      {feedbackStats.data && feedbackStats.data.total > 0 && (
+        <>
+          <div className="section-head">
+            <h2>Suggestion feedback</h2>
+          </div>
+          <div className="cards" style={{ maxWidth: 480 }}>
+            <div className="card">
+              <span className="card-value">{feedbackStats.data.byAction.accept}</span>
+              <span className="card-label">Accepted</span>
+            </div>
+            <div className="card">
+              <span className="card-value">{feedbackStats.data.byAction.dismiss}</span>
+              <span className="card-label">Dismissed</span>
+            </div>
+            <div className="card">
+              <span className="card-value">{feedbackStats.data.byAction.flag}</span>
+              <span className="card-label">Flagged</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {health?.copilot && (
         <>

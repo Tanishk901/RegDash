@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { EmbeddingProvider } from "../copilot/EmbeddingProvider";
 import type { KnowledgeStore } from "../copilot/KnowledgeStore";
 import type { KnowledgeIndexer } from "../copilot/KnowledgeIndexer";
+import type { FeedbackStore } from "../copilot/FeedbackStore";
 import type { TicketStore } from "../lib/store";
 
 export interface KnowledgeRouteOptions {
@@ -10,6 +11,7 @@ export interface KnowledgeRouteOptions {
   embedding: EmbeddingProvider;
   indexer: KnowledgeIndexer;
   ticketStore: TicketStore;
+  feedbackStore?: FeedbackStore;
 }
 
 const SearchQuery = z.object({
@@ -17,7 +19,7 @@ const SearchQuery = z.object({
   topK: z.coerce.number().int().min(1).max(20).default(5),
 });
 
-export function knowledgeRoutes({ knowledgeStore, embedding, indexer, ticketStore }: KnowledgeRouteOptions) {
+export function knowledgeRoutes({ knowledgeStore, embedding, indexer, ticketStore, feedbackStore }: KnowledgeRouteOptions) {
   const r = Router();
 
   r.get("/search", async (req, res, next) => {
@@ -46,6 +48,11 @@ export function knowledgeRoutes({ knowledgeStore, embedding, indexer, ticketStor
   r.get("/status", (_req, res) => {
     res.set("Cache-Control", "public, max-age=30");
     res.json(knowledgeStore.status());
+  });
+
+  r.get("/feedback-stats", (_req, res) => {
+    if (!feedbackStore) return res.json({ total: 0, byAction: { accept: 0, dismiss: 0, flag: 0 } });
+    res.json(feedbackStore.stats());
   });
 
   r.post("/reindex", async (_req, res, next) => {

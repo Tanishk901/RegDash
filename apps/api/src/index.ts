@@ -44,7 +44,7 @@ console.log(`[copilot] Indexed ${indexed} knowledge chunks (llm=${llm.name}, emb
 store.startAutoRefresh(cfg.REFRESH_INTERVAL_SECONDS);
 
 const triageEngine = new TriageEngine(embedding, knowledgeStore, store.teamMembers());
-const copilot = { knowledgeStore, embedding, indexer, ticketStore: store };
+const copilot = { knowledgeStore, embedding, indexer, ticketStore: store, feedbackStore };
 const suggestions = { llm, embedding, knowledgeStore, feedbackStore, ticketStore: store };
 const triage = { triageEngine, triageStore, ticketStore: store };
 createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS, copilot, suggestions, triage, triageStore, templateStore, emailService }).listen(cfg.PORT, () => {

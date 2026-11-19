@@ -107,6 +107,11 @@ export interface KnowledgeSearchResponse {
   results: KnowledgeResult[];
 }
 
+export interface FeedbackStats {
+  total: number;
+  byAction: { accept: number; dismiss: number; flag: number };
+}
+
 export interface KnowledgeStatus {
   totalChunks: number;
   bySources: Record<string, number>;
@@ -230,6 +235,7 @@ export const api = {
   knowledgeSearch: (q: string) =>
     get<KnowledgeSearchResponse>(`/api/knowledge/search?q=${encodeURIComponent(q)}`),
   knowledgeStatus: () => get<KnowledgeStatus>("/api/knowledge/status"),
+  feedbackStats: () => get<FeedbackStats>("/api/knowledge/feedback-stats"),
 
   triageQueue: (status?: string) => {
     const p = new URLSearchParams();
