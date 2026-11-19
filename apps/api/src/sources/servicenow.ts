@@ -28,7 +28,7 @@ type SnField = { value: string; display_value: string };
 export type SnRecord = Record<string, SnField | undefined>;
 
 export const FIELDS = [
-  "number", "short_description", "description", "state", "priority",
+  "sys_id", "number", "short_description", "description", "state", "priority",
   "assigned_to", "assignment_group", "opened_by", "caller_id", "requested_for",
   "opened_at", "sys_updated_on", "hold_reason", "due_date", "comments_and_work_notes",
   "cmdb_ci", "service_offering",
@@ -119,10 +119,26 @@ export class ServiceNowSource implements TicketSource {
     this.fetchImpl = opts.fetchImpl ?? fetch;
   }
 
+  private async request(method: string, path: string, body?: unknown): Promise<Response> {
+    const url = new URL(path, this.opts.baseUrl);
+    const headers: Record<string, string> = {
+      Authorization: `Basic ${Buffer.from(`${this.opts.username}:${this.opts.password}`).toString("base64")}`,
+      Accept: "application/json",
+    };
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    const res = await this.fetchImpl(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`ServiceNow ${method} ${path}: HTTP ${res.status} ${res.statusText}`);
+    return res;
+  }
+
   private async fetchTable(table: string): Promise<SnRecord[]> {
     const query = ["active=true"];
     if (this.opts.assignmentGroup) query.push(`assignment_group.name=${this.opts.assignmentGroup}`);
-    const auth = Buffer.from(`${this.opts.username}:${this.opts.password}`).toString("base64");
     const all: SnRecord[] = [];
 
     for (let offset = 0; ; offset += PAGE_SIZE) {
@@ -134,11 +150,7 @@ export class ServiceNowSource implements TicketSource {
       url.searchParams.set("sysparm_limit", String(PAGE_SIZE));
       url.searchParams.set("sysparm_offset", String(offset));
 
-      const res = await this.fetchImpl(url, {
-        headers: { Authorization: `Basic ${auth}`, Accept: "application/json" },
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!res.ok) throw new Error(`ServiceNow ${table}: HTTP ${res.status} ${res.statusText}`);
+      const res = await this.request("GET", url.pathname + url.search);
       const body = (await res.json()) as { result: SnRecord[] };
       all.push(...body.result);
       if (body.result.length < PAGE_SIZE) break;
