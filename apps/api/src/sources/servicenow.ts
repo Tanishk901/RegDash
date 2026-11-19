@@ -1,5 +1,5 @@
-import type { Ticket, TicketType } from "@regdash/shared";
-import type { SourceResult, TicketSource } from "./TicketSource";
+import type { CommentKind, Ticket, TicketStatus, TicketType } from "@regdash/shared";
+import type { SourceResult, TicketSource, WritableTicketSource } from "./TicketSource";
 import {
   extractTagged,
   normalizeApplication,
@@ -35,6 +35,11 @@ export const FIELDS = [
 ].join(",");
 
 const PAGE_SIZE = 500;
+
+const SN_STATE_MAP: Record<string, Partial<Record<TicketStatus, string>>> = {
+  incident: { NEW: "1", IN_PROGRESS: "2", ON_HOLD: "3", RESOLVED: "6", CLOSED: "7" },
+  sc_req_item: { NEW: "1", IN_PROGRESS: "2", ON_HOLD: "3", RESOLVED: "4", CLOSED: "7" },
+};
 
 export interface ServiceNowOptions {
   baseUrl: string;
@@ -112,7 +117,7 @@ export function mapRecord(r: SnRecord, type: TicketType): { ticket?: Ticket; rea
   };
 }
 
-export class ServiceNowSource implements TicketSource {
+export class ServiceNowSource implements WritableTicketSource {
   readonly name = "servicenow" as const;
   private fetchImpl: typeof fetch;
   private recordIndex = new Map<string, { sysId: string; table: string }>();
@@ -190,5 +195,28 @@ export class ServiceNowSource implements TicketSource {
       }
     }
     return { tickets, rejected };
+  }
+
+  async addComment(number: string, note: string, _by: string, kind: CommentKind = "work_note"): Promise<void> {
+    const { sysId, table } = this.lookupRecord(number);
+    const field = kind === "customer_comment" ? "comments" : "work_notes";
+    await this.request("PATCH", `/api/now/table/${table}/${sysId}`, { [field]: note });
+  }
+
+  async updateAssignment(number: string, assignedTo: string | null): Promise<void> {
+    const { sysId, table } = this.lookupRecord(number);
+    const url = `/api/now/table/${table}/${sysId}?sysparm_input_display_value=true`;
+    await this.request("PATCH", url, { assigned_to: assignedTo ?? "" });
+  }
+
+  async updateStatus(number: string, status: TicketStatus, _by: string): Promise<void> {
+    const { sysId, table } = this.lookupRecord(number);
+    const stateValue = SN_STATE_MAP[table]?.[status];
+    if (!stateValue) throw new Error(`No ServiceNow state mapping for ${status} on table ${table}`);
+    await this.request("PATCH", `/api/now/table/${table}/${sysId}`, { state: stateValue });
+  }
+
+  teamMembers(): string[] {
+    return [];
   }
 }
