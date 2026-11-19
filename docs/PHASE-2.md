@@ -67,7 +67,7 @@ A dashboard connected to live ServiceNow data that the team can act on — comme
 | ID | Requirement | Status |
 |---|---|---|
 | FR-6.1 | Add a comment (work note or customer-visible) to a ticket from the detail panel | ✅ (mock source; ServiceNow pending live access) |
-| FR-6.2 | Edit the most recent comment if it was posted by the current user | ⏳ |
+| FR-6.2 | ~~Edit the most recent comment if it was posted by the current user~~ | ❌ Won't do — ServiceNow journals are append-only by design |
 | FR-6.3 | Assign or reassign a ticket to a team member from a dropdown in the detail panel | ✅ (mock source; ServiceNow pending live access) |
 | FR-6.4 | Update ticket status (e.g. In Progress → On Hold) from the detail panel | ✅ (mock source; ServiceNow pending live access) |
 | FR-6.5 | All write-back operations update ServiceNow in real time and refresh the local cache | ✅ (write-through to source + cache reload) |
@@ -119,7 +119,7 @@ Phase 2 adds:
 | Method | Path | Purpose | Status |
 |---|---|---|---|
 | POST | `/api/tickets/:number/comments` | Add a comment to a ticket | ✅ |
-| PUT | `/api/tickets/:number/comments/:id` | Edit own comment | ⏳ |
+| ~~PUT~~ | ~~`/api/tickets/:number/comments/:id`~~ | ~~Edit own comment~~ | ❌ Won't do |
 | PUT | `/api/tickets/:number/assign` | Reassign a ticket | ✅ |
 | PUT | `/api/tickets/:number/status` | Update ticket status | ✅ |
 | GET | `/api/tickets.xlsx` | Export filtered list as Excel (with column selection via `?columns=`) | ✅ |
