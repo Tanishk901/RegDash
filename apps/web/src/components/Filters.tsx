@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { APPLICATION_CODES, ENVIRONMENTS, PRIORITIES, STATUSES } from "@regdash/shared";
+import { APPLICATION_CODES, ENVIRONMENTS, GROUP_BY_FIELDS, PRIORITIES, STATUSES } from "@regdash/shared";
 import { statusLabel } from "./Badges";
 import { ALL_DISPLAY_COLUMNS, DEFAULT_COLUMN_KEYS } from "../lib/columns";
+
+const GROUP_BY_LABELS: Record<string, string> = {
+  assignedTo: "Owner",
+  priority: "Priority",
+  status: "Status",
+  type: "Type",
+  sla: "SLA",
+  application: "Application",
+  environment: "Environment",
+};
 
 export function Filters({
   params,
@@ -92,6 +102,12 @@ export function Filters({
         />
         Include closed
       </label>
+      <select className={set("groupBy")} value={val("groupBy")} onChange={(e) => onChange({ groupBy: e.target.value || null })} aria-label="Group by">
+        <option value="">No grouping</option>
+        {GROUP_BY_FIELDS.map((f) => (
+          <option key={f} value={f}>{`Group: ${GROUP_BY_LABELS[f]}`}</option>
+        ))}
+      </select>
       <ColumnPicker params={params} onChange={onChange} />
       {active && (
         <button className="link" onClick={() => onChange({ q: null, type: null, status: null, priority: null, assignedTo: null, application: null, environment: null, sla: null, stale: null, includeClosed: null })}>

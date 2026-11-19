@@ -11,7 +11,8 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import type { DashboardSummary } from "@regdash/shared";
+import type { DashboardSummary, GroupByField } from "@regdash/shared";
+import { GROUP_BY_FIELDS } from "@regdash/shared";
 import { ExcelUpload } from "./components/ExcelUpload";
 import { ExportMenu } from "./components/ExportMenu";
 import { Filters } from "./components/Filters";
@@ -241,6 +242,8 @@ function TicketsPage() {
   );
 
   const columnKeys = params.get("columns")?.split(",").filter(Boolean);
+  const groupBy = (params.get("groupBy") as GroupByField | null) ?? undefined;
+  const validGroupBy = groupBy && GROUP_BY_FIELDS.includes(groupBy) ? groupBy : undefined;
 
   const open = (n: string) => navigate({ pathname: `/tickets/${n}`, search: location.search });
   const close = useCallback(() => navigate({ pathname: "/tickets", search: location.search }), [navigate, location.search]);
@@ -260,7 +263,7 @@ function TicketsPage() {
         {!!list.data?.total && <ExportMenu params={params} />}
       </div>
 
-      {list.data && <TicketTable items={list.data.items} columns={columnKeys ?? undefined} selected={number} onOpen={open} />}
+      {list.data && <TicketTable items={list.data.items} columns={columnKeys ?? undefined} groupBy={validGroupBy} selected={number} onOpen={open} />}
 
       {number && (
         <TicketDetail

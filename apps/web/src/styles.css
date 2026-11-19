@@ -261,6 +261,18 @@ table.tickets { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tickets .summary { min-width: 240px; }
 .tickets .app { white-space: nowrap; font-size: 12px; font-weight: 600; }
 .tickets .next { min-width: 220px; color: var(--text); }
+.tickets .group-header th {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.tickets .group-header th .muted { font-weight: 400; }
+.column-picker-wrap { position: relative; }
 .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 th.num { text-align: right; }
 .mono { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; white-space: nowrap; }
