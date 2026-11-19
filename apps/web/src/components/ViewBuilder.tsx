@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   GROUP_BY_FIELDS,
   type GroupByField,
@@ -43,6 +43,20 @@ export function ViewBuilder({
   const [sortDir, setSortDir] = useState<"asc" | "desc">(initial?.sortDir ?? "asc");
   const [groupBy, setGroupBy] = useState<GroupByField | null>(initial?.groupBy ?? null);
   const [pinned, setPinned] = useState(initial?.pinned ?? false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  useEffect(() => {
+    const el = ref.current?.querySelector<HTMLInputElement>("#vb-name");
+    el?.focus();
+  }, []);
 
   const toggleColumn = (key: string) => {
     setColumns((prev) => {
@@ -67,7 +81,7 @@ export function ViewBuilder({
   };
 
   return (
-    <div className="view-builder" role="dialog" aria-label={initial ? "Edit view" : "New view"}>
+    <div className="view-builder" role="dialog" aria-label={initial ? "Edit view" : "New view"} ref={ref}>
       <h3>{initial ? "Edit view" : "New view"}</h3>
 
       <div className="vb-field">
@@ -79,7 +93,6 @@ export function ViewBuilder({
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. My P1 incidents"
           maxLength={200}
-          autoFocus
         />
       </div>
 
