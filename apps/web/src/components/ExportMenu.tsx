@@ -1,19 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type ExportColumn } from "../lib/api";
 
-export function ExportMenu({ params }: { params: URLSearchParams }) {
+export function ExportMenu({ params, defaultColumns }: { params: URLSearchParams; defaultColumns?: string[] }) {
   const [open, setOpen] = useState(false);
   const [columns, setColumns] = useState<ExportColumn[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [initialized, setInitialized] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open || columns) return;
     api.exportColumns().then((cols) => {
       setColumns(cols);
-      setSelected(new Set(cols.map((c) => c.key)));
+      if (!initialized) {
+        setSelected(
+          defaultColumns?.length
+            ? new Set(defaultColumns.filter((k) => cols.some((c) => c.key === k)))
+            : new Set(cols.map((c) => c.key)),
+        );
+        setInitialized(true);
+      }
     });
-  }, [open, columns]);
+  }, [open, columns, defaultColumns, initialized]);
 
   useEffect(() => {
     if (!open) return;
