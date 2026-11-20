@@ -166,6 +166,77 @@ export interface EmailTemplateCreateInput {
   body: string;
 }
 
+export interface EmailLogEntry {
+  id: string;
+  to: string;
+  subject: string;
+  body: string;
+  templateId: string | null;
+  ticketNumber: string | null;
+  trigger: string;
+  status: "sent" | "failed";
+  error: string | null;
+  messageId: string | null;
+  sentAt: string;
+  sentBy: string | null;
+}
+
+export interface MergeField {
+  key: string;
+  label: string;
+  sample: string;
+}
+
+export interface EmailPreview {
+  subject: string;
+  body: string;
+}
+
+export interface BulkSendResult {
+  sent: number;
+  failed: number;
+  total: number;
+}
+
+export interface AutomationConfig {
+  staleReminderDays: number;
+  enabled: boolean;
+}
+
+export interface AutomationResult {
+  trigger: string;
+  sent: number;
+  skipped: number;
+  errors: string[];
+}
+
+export interface IngestDraft {
+  id: string;
+  emailFrom: string;
+  emailSubject: string;
+  emailBody: string;
+  emailReceivedAt: string;
+  classification: string;
+  classificationReason: string;
+  draftType: "INCIDENT" | "SR";
+  draftShortDescription: string;
+  draftDescription: string;
+  draftPriority: string;
+  status: "pending" | "approved" | "rejected";
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+  createdTicketNumber: string | null;
+  createdAt: string;
+}
+
+export interface IngestStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
 export const api = {
   summary: () => get<DashboardSummary>("/api/summary"),
   tickets: (params: URLSearchParams) => get<TicketList>(`/api/tickets?${params}`),
@@ -287,6 +358,83 @@ export const api = {
     }),
   deleteTemplate: (id: string) =>
     send<{ ok: boolean }>(`/api/templates/${encodeURIComponent(id)}`, { method: "DELETE" }),
+
+  emailLog: (ticket?: string) => {
+    const p = new URLSearchParams();
+    if (ticket) p.set("ticket", ticket);
+    return get<EmailLogEntry[]>(`/api/emails/log?${p}`);
+  },
+  mergeFields: () => get<MergeField[]>("/api/emails/merge-fields"),
+  emailPreview: (opts: { templateId?: string; subject?: string; body?: string; ticketNumber?: string }) =>
+    send<EmailPreview>("/api/emails/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    }),
+  sendEmail: (opts: { to: string; subject: string; body: string; templateId?: string; ticketNumber?: string; sentBy?: string }) =>
+    send<{ messageId: string; sentAt: string; status: string }>("/api/emails/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    }),
+  bulkSend: (templateId: string, ticketNumbers: string[], sentBy?: string) =>
+    send<BulkSendResult>("/api/emails/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ templateId, ticketNumbers, sentBy }),
+    }),
+
+  automationConfig: () => get<AutomationConfig>("/api/automation/config"),
+  updateAutomationConfig: (config: Partial<AutomationConfig>) =>
+    send<AutomationConfig>("/api/automation/config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config),
+    }),
+  triggerStaleReminders: () =>
+    send<AutomationResult>("/api/automation/stale-reminders", { method: "POST" }),
+  triggerWelcome: (to: string, name?: string) =>
+    send<AutomationResult>("/api/automation/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, name }),
+    }),
+  triggerAcknowledge: (ticketNumber: string, to: string) =>
+    send<AutomationResult>("/api/automation/acknowledge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticketNumber, to }),
+    }),
+
+  ingestionQueue: (status?: string) => {
+    const p = new URLSearchParams();
+    if (status) p.set("status", status);
+    return get<IngestDraft[]>(`/api/ingestion/queue?${p}`);
+  },
+  ingestionStats: () => get<IngestStats>("/api/ingestion/stats"),
+  ingestionDraft: (id: string) => get<IngestDraft>(`/api/ingestion/${encodeURIComponent(id)}`),
+  ingestionPoll: () =>
+    send<{ polled: number; created: number }>("/api/ingestion/poll", { method: "POST" }),
+  ingestionUpdateDraft: (id: string, fields: Partial<Pick<IngestDraft, "draftShortDescription" | "draftDescription" | "draftPriority" | "draftType">>) =>
+    send<IngestDraft>(`/api/ingestion/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    }),
+  ingestionApprove: (id: string, reviewedBy: string) =>
+    send<IngestDraft>(`/api/ingestion/${encodeURIComponent(id)}/approve`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewedBy }),
+    }),
+  ingestionReject: (id: string, reviewedBy: string, reason: string) =>
+    send<IngestDraft>(`/api/ingestion/${encodeURIComponent(id)}/reject`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewedBy, reason }),
+    }),
+  ingestionReset: () =>
+    send<{ ok: boolean }>("/api/ingestion/reset", { method: "POST" }),
 };
 
 /** Fetch + poll. Keeps showing the previous data while a reload is in flight. */
