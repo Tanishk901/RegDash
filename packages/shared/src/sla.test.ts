@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeSla, computeSlaDetail, computeDetailedSla, findPolicy, formatDuration, formatEffort, getDefaultPolicy, toView } from "./sla";
+import { computeSla, computeSlaDetail, computeDetailedSla, findPolicy, formatDuration, formatEffort, getDefaultPolicy, getPolicyForType, toView } from "./sla";
 import type { Ticket } from "./types";
 
 const base: Ticket = {
@@ -151,5 +151,71 @@ describe("toView with detailed SLA", () => {
     expect(v.responseSla!.kind).toBe("response");
     expect(v.resolutionSla).not.toBeNull();
     expect(v.resolutionSla!.kind).toBe("resolution");
+  });
+});
+
+// ── Service Request SLA ──────────────────────────────────────────────
+
+const srBase: Ticket = { ...base, number: "SR0000001", type: "SR", priority: "P2" };
+
+describe("getPolicyForType", () => {
+  it("returns different policies for INCIDENT and SR", () => {
+    const inc = getPolicyForType("INCIDENT");
+    const sr = getPolicyForType("SR");
+    expect(inc.name).not.toBe(sr.name);
+    const incRes = findPolicy(inc, "resolution", "P2");
+    const srRes = findPolicy(sr, "resolution", "P2");
+    expect(srRes!.targetHours).toBeGreaterThan(incRes!.targetHours);
+  });
+});
+
+describe("SR SLA targets", () => {
+  const srPolicy = getPolicyForType("SR");
+
+  it("SR response P2 is 4h", () => {
+    expect(findPolicy(srPolicy, "response", "P2")!.targetHours).toBe(4);
+  });
+  it("SR resolution P2 is 48h", () => {
+    expect(findPolicy(srPolicy, "resolution", "P2")!.targetHours).toBe(48);
+  });
+  it("SR resolution P3 is 160h", () => {
+    expect(findPolicy(srPolicy, "resolution", "P3")!.targetHours).toBe(160);
+  });
+});
+
+describe("computeSla for service requests", () => {
+  it("SR P2 is OK at 8h (would be BREACHED for incident)", () => {
+    expect(computeSla(srBase, new Date("2026-01-01T08:00:00Z"))).toBe("OK");
+    expect(computeSla(base, new Date("2026-01-01T08:00:00Z"))).toBe("BREACHED");
+  });
+  it("SR P2 is AT_RISK at 36h", () => {
+    expect(computeSla(srBase, new Date("2026-01-02T12:00:00Z"))).toBe("AT_RISK");
+  });
+  it("SR P2 is BREACHED at 48h", () => {
+    expect(computeSla(srBase, new Date("2026-01-03T00:00:00Z"))).toBe("BREACHED");
+  });
+});
+
+describe("computeDetailedSla for service requests", () => {
+  it("auto-selects SR policy when no policy given", () => {
+    const result = computeDetailedSla(srBase, undefined, new Date("2026-01-01T08:00:00Z"));
+    expect(result.resolution.targetHours).toBe(48);
+    expect(result.resolution.state).toBe("OK");
+  });
+  it("SR response BREACHED at 5h for P2 (target 4h)", () => {
+    const result = computeDetailedSla(srBase, undefined, new Date("2026-01-01T05:00:00Z"));
+    expect(result.response.state).toBe("BREACHED");
+    expect(result.response.targetHours).toBe(4);
+  });
+});
+
+describe("toView uses SR policy for service requests", () => {
+  it("SR P2 resolution target is 48h, not 8h", () => {
+    const v = toView(srBase, new Date("2026-01-01T04:00:00Z"));
+    expect(v.resolutionSla!.targetHours).toBe(48);
+  });
+  it("SR P2 at 10h is still OK (incident would be breached)", () => {
+    const v = toView(srBase, new Date("2026-01-01T10:00:00Z"));
+    expect(v.sla).not.toBe("BREACHED");
   });
 });

@@ -1,4 +1,4 @@
-import type { Priority, SlaState, TaskSlaRecord, Ticket, TicketSlaDetail, TicketView } from "./types";
+import type { Priority, SlaState, TaskSlaRecord, Ticket, TicketSlaDetail, TicketType, TicketView } from "./types";
 
 // ── SLA Policy Model ──────────────────────────────────────────────────
 
@@ -47,6 +47,27 @@ export const DEFAULT_SLA_HOURS: Record<Priority, number> = {
 
 const DEFAULT_POLICY = buildPolicy("Silver 16×5", RESPONSE_SLA_HOURS, DEFAULT_SLA_HOURS);
 
+// Service requests are planned work, not break-fix — longer SLA windows.
+export const SR_RESPONSE_SLA_HOURS: Record<Priority, number> = {
+  P1: 1,    // 1 hour
+  P2: 4,    // 4 hours
+  P3: 24,   // 1.5 business days
+  P4: 24,   // 1.5 business days
+};
+
+export const SR_SLA_HOURS: Record<Priority, number> = {
+  P1: 16,   // 1 business day
+  P2: 48,   // 3 business days (3 × 16 h)
+  P3: 160,  // 10 business days (10 × 16 h)
+  P4: 240,  // 15 business days (15 × 16 h)
+};
+
+const SR_POLICY = buildPolicy("SR Standard", SR_RESPONSE_SLA_HOURS, SR_SLA_HOURS);
+
+export function getPolicyForType(type: TicketType): SlaPolicy {
+  return type === "SR" ? SR_POLICY : DEFAULT_POLICY;
+}
+
 export function getDefaultPolicy(): SlaPolicy {
   return DEFAULT_POLICY;
 }
@@ -71,13 +92,14 @@ export function hoursBetween(fromIso: string, to: Date): number {
   return Math.max(0, (to.getTime() - new Date(fromIso).getTime()) / HOUR);
 }
 
-export function slaDueAt(ticket: Pick<Ticket, "createdAt" | "priority" | "slaDueAt">): Date {
+export function slaDueAt(ticket: Pick<Ticket, "createdAt" | "priority" | "slaDueAt" | "type">): Date {
   if (ticket.slaDueAt) return new Date(ticket.slaDueAt);
-  return new Date(new Date(ticket.createdAt).getTime() + DEFAULT_SLA_HOURS[ticket.priority] * HOUR);
+  const hours = ticket.type === "SR" ? SR_SLA_HOURS : DEFAULT_SLA_HOURS;
+  return new Date(new Date(ticket.createdAt).getTime() + hours[ticket.priority] * HOUR);
 }
 
 export function computeSla(
-  ticket: Pick<Ticket, "createdAt" | "priority" | "slaDueAt" | "status">,
+  ticket: Pick<Ticket, "createdAt" | "priority" | "slaDueAt" | "status" | "type">,
   now: Date = new Date(),
 ): SlaState {
   // Closed/resolved tickets are judged elsewhere; don't alarm on them.
@@ -138,10 +160,11 @@ export function computeSlaDetail(
 }
 
 export function computeDetailedSla(
-  ticket: Pick<Ticket, "createdAt" | "priority" | "slaDueAt" | "status">,
-  policy: SlaPolicy = DEFAULT_POLICY,
+  ticket: Pick<Ticket, "createdAt" | "priority" | "slaDueAt" | "status" | "type">,
+  policy?: SlaPolicy,
   now: Date = new Date(),
 ): { sla: SlaState; response: TicketSlaDetail; resolution: TicketSlaDetail } {
+  if (!policy) policy = getPolicyForType(ticket.type);
   const response = computeSlaDetail(ticket, "response", policy, now);
   const resolution = computeSlaDetail(ticket, "resolution", policy, now);
   const SLA_SEVERITY: Record<SlaState, number> = { BREACHED: 3, AT_RISK: 2, PAUSED: 1, OK: 0 };
@@ -150,9 +173,10 @@ export function computeDetailedSla(
 }
 
 export function toView(ticket: Ticket, now: Date = new Date(), policy?: SlaPolicy): TicketView {
+  const effectivePolicy = policy ?? getPolicyForType(ticket.type);
   const hoursSinceUpdate = hoursBetween(ticket.updatedAt, now);
   const open = ticket.status !== "RESOLVED" && ticket.status !== "CLOSED";
-  const detailed = computeDetailedSla(ticket, policy, now);
+  const detailed = computeDetailedSla(ticket, effectivePolicy, now);
   return {
     ...ticket,
     ageHours: hoursBetween(ticket.createdAt, now),
