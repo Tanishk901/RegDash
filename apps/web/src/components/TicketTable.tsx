@@ -7,12 +7,18 @@ export function TicketTable({
   groupBy,
   selected,
   onOpen,
+  selectable,
+  selectedNumbers,
+  onSelectionChange,
 }: {
   items: TicketView[];
   columns?: string[];
   groupBy?: GroupByField | null;
   selected?: string;
   onOpen: (number: string) => void;
+  selectable?: boolean;
+  selectedNumbers?: Set<string>;
+  onSelectionChange?: (numbers: Set<string>) => void;
 }) {
   const cols = resolveColumns(columns ?? DEFAULT_COLUMN_KEYS);
 
@@ -21,6 +27,22 @@ export function TicketTable({
   }
 
   const groups = groupBy ? groupItems(items, groupBy) : null;
+
+  const toggleOne = (num: string) => {
+    if (!onSelectionChange || !selectedNumbers) return;
+    const next = new Set(selectedNumbers);
+    if (next.has(num)) next.delete(num); else next.add(num);
+    onSelectionChange(next);
+  };
+
+  const toggleAll = () => {
+    if (!onSelectionChange || !selectedNumbers) return;
+    if (selectedNumbers.size === items.length) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(items.map((t) => t.number)));
+    }
+  };
 
   const renderRow = (t: TicketView) => (
     <tr
@@ -31,6 +53,16 @@ export function TicketTable({
       tabIndex={0}
       aria-label={`Open ${t.number}`}
     >
+      {selectable && (
+        <td className="col-check" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selectedNumbers?.has(t.number) ?? false}
+            onChange={() => toggleOne(t.number)}
+            aria-label={`Select ${t.number}`}
+          />
+        </td>
+      )}
       {cols.map((c) => (
         <td key={c.key} className={c.className}>
           {c.render(t)}
@@ -44,6 +76,16 @@ export function TicketTable({
       <table className="tickets">
         <thead>
           <tr>
+            {selectable && (
+              <th className="col-check">
+                <input
+                  type="checkbox"
+                  checked={selectedNumbers?.size === items.length && items.length > 0}
+                  onChange={toggleAll}
+                  aria-label="Select all tickets"
+                />
+              </th>
+            )}
             {cols.map((c) => (
               <th key={c.key} className={c.className}>
                 {c.header}
@@ -55,7 +97,7 @@ export function TicketTable({
           ? [...groups.entries()].map(([label, group]) => (
               <tbody key={label}>
                 <tr className="group-header">
-                  <th colSpan={cols.length}>
+                  <th colSpan={cols.length + (selectable ? 1 : 0)}>
                     {label} <span className="muted">({group.length})</span>
                   </th>
                 </tr>
