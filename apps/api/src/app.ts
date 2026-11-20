@@ -11,8 +11,12 @@ import { triageRoutes, type TriageRouteOptions } from "./routes/triage";
 import { templateRoutes } from "./routes/templates";
 import type { TemplateStore } from "./email/TemplateStore";
 import type { EmailService } from "./email/EmailService";
+import type { EmailLogStore } from "./email/EmailLogStore";
+import { emailRoutes, type EmailRouteOptions } from "./routes/emails";
+import { automationRoutes, type AutomationRouteOptions } from "./routes/automation";
+import { ingestionRoutes, type IngestionRouteOptions } from "./routes/ingestion";
 
-export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions; triageStore?: RouteOptions["triageStore"]; templateStore?: TemplateStore; emailService?: EmailService } = {}) {
+export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?: ViewStore; copilot?: KnowledgeRouteOptions; suggestions?: SuggestionsRouteOptions; triage?: TriageRouteOptions; triageStore?: RouteOptions["triageStore"]; templateStore?: TemplateStore; emailService?: EmailService; emailLog?: EmailLogStore; automation?: AutomationRouteOptions["automation"]; ingestion?: IngestionRouteOptions } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.use(cors({ origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] }));
@@ -23,15 +27,19 @@ export function createApp(store: TicketStore, opts: RouteOptions & { viewStore?:
   if (opts.suggestions) app.use("/api/tickets", suggestionsRoutes(opts.suggestions));
   if (opts.triage) app.use("/api/triage", triageRoutes(opts.triage));
   if (opts.templateStore) app.use("/api/templates", templateRoutes(opts.templateStore));
-  if (opts.emailService) {
-    app.post("/api/email/send", async (req, res, next) => {
-      try {
-        const { to, subject, body } = req.body;
-        if (!to || !subject) return res.status(400).json({ error: "to and subject are required" });
-        const result = await opts.emailService!.send({ to, subject, body: body ?? "" });
-        res.json(result);
-      } catch (err) { next(err); }
-    });
+  if (opts.emailService && opts.emailLog && opts.templateStore) {
+    app.use("/api/emails", emailRoutes({
+      emailService: opts.emailService,
+      emailLog: opts.emailLog,
+      templateStore: opts.templateStore,
+      ticketStore: store,
+    }));
+  }
+  if (opts.automation) {
+    app.use("/api/automation", automationRoutes({ automation: opts.automation, ticketStore: store }));
+  }
+  if (opts.ingestion) {
+    app.use("/api/ingestion", ingestionRoutes(opts.ingestion));
   }
   app.use((_req, res) => res.status(404).json({ error: "Not found" }));
   // Express recognises an error handler by its four arguments, so _next has to stay.

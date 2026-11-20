@@ -10,6 +10,10 @@ import { TriageEngine } from "./copilot/TriageEngine";
 import { TriageStore } from "./copilot/TriageStore";
 import { TemplateStore } from "./email/TemplateStore";
 import { MockEmailService } from "./email/MockEmailService";
+import { EmailLogStore } from "./email/EmailLogStore";
+import { EmailAutomation } from "./email/EmailAutomation";
+import { IngestStore } from "./ingestion/IngestStore";
+import { MockMailbox } from "./ingestion/MockMailbox";
 
 const cfg = loadConfig();
 const configured = createSource(cfg);
@@ -29,6 +33,10 @@ const feedbackStore = new FeedbackStore();
 const triageStore = new TriageStore();
 const templateStore = new TemplateStore();
 const emailService = new MockEmailService();
+const emailLog = new EmailLogStore();
+const automation = new EmailAutomation(emailService, emailLog, templateStore);
+const ingestStore = new IngestStore();
+const mailbox = new MockMailbox();
 
 await upload.restore();
 await viewStore.restore();
@@ -36,6 +44,8 @@ await knowledgeStore.restore();
 await feedbackStore.restore();
 await triageStore.restore();
 await templateStore.restore();
+await emailLog.restore();
+await ingestStore.restore();
 await store.refresh();
 
 const indexed = await indexer.indexAll(store.all());
@@ -47,7 +57,8 @@ const triageEngine = new TriageEngine(embedding, knowledgeStore, store.teamMembe
 const copilot = { knowledgeStore, embedding, indexer, ticketStore: store, feedbackStore };
 const suggestions = { llm, embedding, knowledgeStore, feedbackStore, ticketStore: store };
 const triage = { triageEngine, triageStore, ticketStore: store };
-createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS, copilot, suggestions, triage, triageStore, templateStore, emailService }).listen(cfg.PORT, () => {
+const ingestion = { ingestStore, mailbox, automation };
+createApp(store, { servicenowUrl: cfg.SERVICENOW_BASE_URL, upload, viewStore, refreshIntervalSeconds: cfg.REFRESH_INTERVAL_SECONDS, copilot, suggestions, triage, triageStore, templateStore, emailService, emailLog, automation, ingestion }).listen(cfg.PORT, () => {
   console.log(
     `RegDash API on http://localhost:${cfg.PORT}  source=${upload.current() ? "upload" : cfg.DATA_SOURCE}  tickets=${store.all().length}` +
       (store.lastError ? `  (last error: ${store.lastError})` : ""),
