@@ -221,3 +221,35 @@ export const EMAIL_TEMPLATE_KINDS: EmailTemplateKind[] = [
   "follow_up",
   "custom",
 ];
+
+/* ── Mailbox ingestion (Phase 3) ── */
+
+export type IngestClassification = "incident" | "service_request" | "access_request" | "general_inquiry";
+export type IngestDraftStatus = "pending" | "approved" | "rejected";
+
+export const INGEST_CLASSIFICATIONS: IngestClassification[] = [
+  "incident",
+  "service_request",
+  "access_request",
+  "general_inquiry",
+];
+
+export interface IngestDraft {
+  id: string;
+  emailFrom: string;
+  emailSubject: string;
+  emailBody: string;
+  emailReceivedAt: string;
+  classification: IngestClassification;
+  classificationReason: string;
+  draftType: "INCIDENT" | "SR";
+  draftShortDescription: string;
+  draftDescription: string;
+  draftPriority: "P1" | "P2" | "P3" | "P4";
+  status: IngestDraftStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+  createdTicketNumber: string | null;
+  createdAt: string;
+}
