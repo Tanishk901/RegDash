@@ -273,10 +273,6 @@ export function TicketDetail({
               )}
             </section>
 
-            <ErrorBoundary fallback={<p className="muted small">Suggestions unavailable.</p>}>
-              <SuggestionsPanel ticketNumber={number} />
-            </ErrorBoundary>
-
             <dl className="facts">
               <dt>Owner</dt>
               <dd>
@@ -330,6 +326,10 @@ export function TicketDetail({
             )}
 
             <SimilarTickets ticketNumber={number} description={t.shortDescription} />
+
+            <ErrorBoundary fallback={<p className="muted small">Suggestions unavailable.</p>}>
+              <SuggestionsPanel ticketNumber={number} />
+            </ErrorBoundary>
 
             <section>
               <h4>Activity</h4>
