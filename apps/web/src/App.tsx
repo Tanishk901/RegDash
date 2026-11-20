@@ -30,6 +30,8 @@ import { TriageQueuePage } from "./components/TriageQueuePage";
 import { TemplatesPage } from "./components/TemplatesPage";
 import { GlobalSearch } from "./components/GlobalSearch";
 import { ShortcutHelp } from "./components/ShortcutHelp";
+import { BulkEmailBar } from "./components/BulkEmailBar";
+import { IngestionPage } from "./components/IngestionPage";
 import { api, usePolling, type Health } from "./lib/api";
 
 const DEFAULT_REFRESH_MS = 60_000;
@@ -123,7 +125,8 @@ function Shell() {
             <NavLink className={tabClass} to="/workload">Team workload</NavLink>
             <NavLink className={tabClass} to="/views">Views</NavLink>
             <NavLink className={tabClass} to="/triage">Triage</NavLink>
-            <NavLink className={tabClass} to="/templates">Templates</NavLink>
+            <NavLink className={tabClass} to="/templates">Email</NavLink>
+            <NavLink className={tabClass} to="/ingestion">Ingestion</NavLink>
             {pinnedViews.data && pinnedViews.data.length > 0 && (
               <>
                 <span className="tab-divider" />
@@ -201,6 +204,7 @@ function Shell() {
 function DashboardPage() {
   const { summary, health, refreshMs } = useShared();
   const feedbackStats = usePolling(() => api.feedbackStats(), [], refreshMs);
+  const ingestStats = usePolling(() => api.ingestionStats(), [], refreshMs);
   const [params] = useSearchParams();
 
   // Links saved before the pages were split carried the view and filters on "/".
@@ -281,6 +285,30 @@ function DashboardPage() {
           </div>
         </>
       )}
+
+      {ingestStats.data && ingestStats.data.total > 0 && (
+        <>
+          <div className="section-head">
+            <h2>Mailbox ingestion</h2>
+          </div>
+          <div className="cards" style={{ maxWidth: 480 }}>
+            <div className="card">
+              <span className="card-value" style={{ color: ingestStats.data.pending > 0 ? "var(--at-risk)" : "var(--muted)" }}>
+                {ingestStats.data.pending}
+              </span>
+              <span className="card-label">Pending review</span>
+            </div>
+            <div className="card">
+              <span className="card-value">{ingestStats.data.approved}</span>
+              <span className="card-label">Approved</span>
+            </div>
+            <div className="card">
+              <span className="card-value">{ingestStats.data.rejected}</span>
+              <span className="card-label">Rejected</span>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -291,6 +319,7 @@ function TicketsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { number } = useParams();
+  const [selectedNumbers, setSelectedNumbers] = useState<Set<string>>(new Set());
 
   const paramKey = params.toString();
   // Also reloads as soon as the API has new data, so the list never lags the header.
@@ -328,7 +357,20 @@ function TicketsPage() {
         {!!list.data?.total && <ExportMenu params={params} />}
       </div>
 
-      {list.data && <TicketTable items={list.data.items} columns={columnKeys ?? undefined} groupBy={validGroupBy} selected={number} onOpen={open} />}
+      <BulkEmailBar selectedNumbers={selectedNumbers} onDone={() => setSelectedNumbers(new Set())} />
+
+      {list.data && (
+        <TicketTable
+          items={list.data.items}
+          columns={columnKeys ?? undefined}
+          groupBy={validGroupBy}
+          selected={number}
+          onOpen={open}
+          selectable
+          selectedNumbers={selectedNumbers}
+          onSelectionChange={setSelectedNumbers}
+        />
+      )}
 
       {number && (
         <TicketDetail
@@ -366,6 +408,7 @@ export function App() {
         <Route path="views/:id" element={<CustomViewPage />} />
         <Route path="triage" element={<TriageQueuePage />} />
         <Route path="templates" element={<TemplatesPage />} />
+        <Route path="ingestion" element={<IngestionPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
