@@ -459,6 +459,7 @@ export function usePolling<T>(load: () => Promise<T>, deps: unknown[], intervalM
 
   useEffect(() => {
     void reload();
+    if (!intervalMs) return;
     const id = setInterval(() => void reload(), intervalMs);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
