@@ -4,8 +4,8 @@
 **Phase:** 3 of 4. Automation
 **Version:** v3.0.0
 **Owner:** Tanishk
-**Status:** In progress. FR-12.x (Custom Dashboard Builder) complete.
-**Last updated:** 19 Nov 2026
+**Status:** In progress. FR-12.x (Custom Dashboard Builder) complete. FR-10.x (Bulk/templated mails) complete. FR-11.x (Mailbox ingestion) complete (mock). FR-9.x (Auto-emails) complete (mock triggers).
+**Last updated:** 20 Nov 2026
 
 ---
 
@@ -54,31 +54,31 @@ Automate the routine communication that eats up engineering time, turn the share
 ### Outlook and Teams auto-emails (FR-9.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-9.1 | Trigger an Outlook email when a user is provisioned for RegCreate (welcome + access details) | ⏳ |
-| FR-9.2 | Trigger a reminder email for tickets with no update in N days (configurable threshold) | ⏳ |
-| FR-9.3 | Trigger an acknowledgement email when a new SR or INC is created from the mailbox | ⏳ |
-| FR-9.4 | Send Teams messages as an alternative or supplement to email | ⏳ |
-| FR-9.5 | All automated emails are logged in the ticket's activity timeline | ⏳ |
+| FR-9.1 | Trigger an Outlook email when a user is provisioned for RegCreate (welcome + access details) | ✅ `POST /api/automation/welcome` (mock email service; Graph API pending) |
+| FR-9.2 | Trigger a reminder email for tickets with no update in N days (configurable threshold) | ✅ `POST /api/automation/stale-reminders` with configurable threshold |
+| FR-9.3 | Trigger an acknowledgement email when a new SR or INC is created from the mailbox | ✅ `POST /api/automation/acknowledge` |
+| FR-9.4 | Send Teams messages as an alternative or supplement to email | ⏳ Blocked on Teams webhook/bot registration |
+| FR-9.5 | All automated emails are logged in the ticket's activity timeline | ✅ `EmailLogStore` tracks all automated emails |
 
 ### Bulk and templated mails (FR-10.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-10.1 | Template editor: create and edit email templates with merge fields (ticket number, assignee, requester, SLA due, etc.) | ⏳ |
-| FR-10.2 | Template categories: welcome, reminder, escalation, follow-up, status update, custom | ⏳ |
-| FR-10.3 | Bulk send: select multiple tickets and send the same template to all their requesters or assignees | ⏳ |
-| FR-10.4 | Preview before send: see the merged email before it goes out | ⏳ |
-| FR-10.5 | Delivery log: see which emails were sent, to whom, and when | ⏳ |
+| FR-10.1 | Template editor: create and edit email templates with merge fields (ticket number, assignee, requester, SLA due, etc.) | ✅ 13 merge fields; merge field reference in editor |
+| FR-10.2 | Template categories: welcome, reminder, escalation, follow-up, status update, custom | ✅ `EmailTemplateKind` enum used in templates |
+| FR-10.3 | Bulk send: select multiple tickets and send the same template to all their requesters or assignees | ✅ Ticket table checkboxes + BulkEmailBar + `POST /api/emails/bulk` |
+| FR-10.4 | Preview before send: see the merged email before it goes out | ✅ `POST /api/emails/preview` + live preview in compose modal + template editor |
+| FR-10.5 | Delivery log: see which emails were sent, to whom, and when | ✅ `EmailLogStore` + `GET /api/emails/log` + delivery log tab |
 
 ### Mailbox ingestion (FR-11.x)
 | ID | Requirement | Status |
 |---|---|---|
-| FR-11.1 | Connect to the team's shared mailbox (Microsoft Graph or Exchange Web Services) | ⏳ |
-| FR-11.2 | Classify incoming emails by rule-based keywords: incident, service request, access request, general inquiry | ⏳ |
-| FR-11.3 | Auto-draft an INC or SR in ServiceNow with fields populated from the email (subject → short description, body → description, sender → requester) | ⏳ |
-| FR-11.4 | Queue the draft for human review: an engineer sees the draft, edits if needed, and approves or rejects | ⏳ |
-| FR-11.5 | On approval, create the ticket in ServiceNow and send an acknowledgement to the sender | ⏳ |
-| FR-11.6 | On rejection, archive the email with a reason (spam, duplicate, not actionable) | ⏳ |
-| FR-11.7 | Dashboard widget showing the ingestion queue: pending drafts, approved, rejected | ⏳ |
+| FR-11.1 | Connect to the team's shared mailbox (Microsoft Graph or Exchange Web Services) | ✅ `MockMailbox` adapter; Graph API pending Azure app registration |
+| FR-11.2 | Classify incoming emails by rule-based keywords: incident, service request, access request, general inquiry | ✅ `EmailClassifier` with keyword scoring |
+| FR-11.3 | Auto-draft an INC or SR in ServiceNow with fields populated from the email (subject → short description, body → description, sender → requester) | ✅ `IngestStore` creates drafts with populated fields |
+| FR-11.4 | Queue the draft for human review: an engineer sees the draft, edits if needed, and approves or rejects | ✅ `IngestionPage` with draft review dialog and edit support |
+| FR-11.5 | On approval, create the ticket in ServiceNow and send an acknowledgement to the sender | ✅ Approve generates ticket number (mock); ServiceNow write pending live access |
+| FR-11.6 | On rejection, archive the email with a reason (spam, duplicate, not actionable) | ✅ Reject with reason via `PUT /api/ingestion/:id/reject` |
+| FR-11.7 | Dashboard widget showing the ingestion queue: pending drafts, approved, rejected | ✅ Dashboard ingestion stats cards |
 
 ### Custom dashboard builder (FR-12.x)
 | ID | Requirement | Status |

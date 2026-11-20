@@ -1,5 +1,56 @@
 # Changelog
 
+## 5.0.0 — Phase 2+3 Completion (2026-11-20)
+
+### Email automation (FR-9.x, FR-10.x)
+- `EmailLogStore` with JSON persistence — tracks all sent emails (manual, bulk, automated)
+- Merge field support: `{{ticket}}`, `{{assignee}}`, `{{priority}}`, `{{requester}}`, `{{sla_state}}` etc.
+- `POST /api/emails/preview` — preview merged template with real ticket data or sample values
+- `POST /api/emails/send` — send with merge field resolution and delivery logging
+- `POST /api/emails/bulk` — bulk send a template to multiple tickets' requesters
+- `GET /api/emails/log` — delivery log (filterable by ticket)
+- `GET /api/emails/merge-fields` — available merge fields with labels and samples
+- `EmailAutomation` service with configurable triggers:
+  - `POST /api/automation/stale-reminders` — send reminders for stale tickets (configurable threshold)
+  - `POST /api/automation/welcome` — send welcome email to new users
+  - `POST /api/automation/acknowledge` — send acknowledgement for a ticket
+  - `GET/PUT /api/automation/config` — toggle automation and configure thresholds
+- Templates page enhanced with delivery log tab, automation controls tab, merge field reference
+- Email compose modal with live merge field preview
+
+### Bulk email (FR-10.3)
+- Ticket table now has selection checkboxes (select all / individual)
+- Bulk email bar: select tickets, choose template, send to all requesters
+- Bulk send results shown with sent/failed counts
+
+### Mailbox ingestion (FR-11.x)
+- `EmailClassifier` — rule-based keyword classification (incident, service request, access request, general inquiry)
+- `IngestStore` with JSON persistence — draft queue with pending/approved/rejected states
+- `MockMailbox` — generates 5 sample emails for development
+- Ingestion API routes:
+  - `POST /api/ingestion/poll` — fetch new emails from mailbox, classify, and create drafts
+  - `GET /api/ingestion/queue` — list drafts (filterable by status)
+  - `GET /api/ingestion/stats` — pending/approved/rejected counts
+  - `GET /api/ingestion/:id` — single draft detail
+  - `PUT /api/ingestion/:id` — edit draft fields before review
+  - `PUT /api/ingestion/:id/approve` — approve draft and generate ticket number
+  - `PUT /api/ingestion/:id/reject` — reject draft with reason
+- `IngestionPage` UI at `/ingestion` — stats cards, filterable queue table, draft review dialog
+- Dashboard widget showing ingestion queue pending/approved/rejected counts
+
+### Dashboard export (FR-7.4)
+- Summary CSV and Excel export buttons on dashboard (completed in prior version, status updated)
+
+### Tests
+- 5 EmailLogStore tests (CRUD, filtering, persistence)
+- 5 merge field tests (replacement, null handling, samples)
+- 5 EmailClassifier tests (incident, access, SR, general classification)
+- 8 IngestStore tests (CRUD, approve/reject, filtering, persistence)
+
+### Navigation
+- Templates tab renamed to "Email" (now includes templates, delivery log, automation)
+- New "Ingestion" tab in nav bar
+
 ## 4.1.0 — Phase 4 Polish + Phase 3 Email (2026-11-19)
 
 ### Dark mode & UI polish

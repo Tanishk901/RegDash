@@ -35,7 +35,11 @@ Phase 1 (read-only dashboard) is complete. Phases 2 and 3 are in [Roadmap](#road
 | **SLA that pauses** | Tickets waiting on someone outside the team show as Paused, not breached. |
 | **Keeps working in an outage** | If a refresh fails, the last good data stays on screen with a clear error. |
 | **AI copilot** | Knowledge search (Ctrl+K), resolution suggestions with citations, and auto-triage with bulk approve/reject. |
-| **Email templates** | Create and manage email templates for acknowledgements, reminders, escalations and more. Compose emails from the ticket detail panel. |
+| **Email templates** | Create and manage email templates with merge fields. Compose emails from the ticket detail panel with live preview. |
+| **Bulk email** | Select tickets in the table and send a template to all their requesters at once. |
+| **Email automation** | Configurable triggers for stale ticket reminders, welcome emails, and ticket acknowledgements. |
+| **Delivery log** | Full log of every email sent — manual, bulk, or automated — filterable by ticket. |
+| **Mailbox ingestion** | Poll the shared mailbox, auto-classify emails, draft tickets for human review, then approve or reject. |
 | **Custom views** | Save, pin and share filtered views of the ticket table. |
 
 <table>
@@ -70,7 +74,8 @@ That runs on **mock data** with no setup, and no real company data is involved.
 | `/workload` | Open tickets per engineer |
 | `/views` | Saved and pinned custom views |
 | `/triage` | Auto-triage queue with bulk actions and accuracy trend |
-| `/templates` | Email template management (Phase 3) |
+| `/templates` | Email templates, delivery log, and automation controls |
+| `/ingestion` | Mailbox ingestion queue with draft review |
 
 ## Data sources
 
@@ -274,7 +279,21 @@ flowchart LR
 | `PUT /api/triage/bulk` | Bulk approve or reject triage items |
 | `GET /api/templates` | List email templates |
 | `POST /api/templates` | Create an email template |
-| `POST /api/email/send` | Send an email (mock service in dev) |
+| `POST /api/emails/send` | Send an email with merge field resolution |
+| `POST /api/emails/bulk` | Bulk send a template to multiple tickets |
+| `POST /api/emails/preview` | Preview merged template |
+| `GET /api/emails/log` | Email delivery log |
+| `GET /api/emails/merge-fields` | Available merge fields |
+| `GET /api/automation/config` | Automation settings |
+| `PUT /api/automation/config` | Update automation settings |
+| `POST /api/automation/stale-reminders` | Trigger stale ticket reminders |
+| `POST /api/automation/welcome` | Trigger welcome email |
+| `POST /api/automation/acknowledge` | Trigger acknowledgement email |
+| `POST /api/ingestion/poll` | Poll mailbox for new emails |
+| `GET /api/ingestion/queue` | List ingestion draft queue |
+| `GET /api/ingestion/stats` | Ingestion queue statistics |
+| `PUT /api/ingestion/:id/approve` | Approve a draft |
+| `PUT /api/ingestion/:id/reject` | Reject a draft |
 
 </details>
 

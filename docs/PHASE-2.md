@@ -4,8 +4,8 @@
 **Phase:** 2 of 4. Live Data & Collaboration
 **Version:** v2.1.0
 **Owner:** Tanishk
-**Status:** In progress. Phase 2b write methods, real SLA, and auto-refresh complete (mock + unit-tested). Live ServiceNow validation pending write access. Auth/SSO blocked on external teams.
-**Last updated:** 19 Nov 2026
+**Status:** In progress. Phase 2b write methods, real SLA, auto-refresh, and dashboard export complete (mock + unit-tested). Live ServiceNow validation pending write access. Auth/SSO blocked on external teams.
+**Last updated:** 20 Nov 2026
 
 ---
 
@@ -79,7 +79,7 @@ A dashboard connected to live ServiceNow data that the team can act on — comme
 | FR-7.1 | Export the current filtered/sorted ticket list as CSV (already in Phase 1) | ✅ |
 | FR-7.2 | Export as Excel (.xlsx) with the same filters applied | ✅ |
 | FR-7.3 | Column picker: choose which columns to include in the export | ✅ |
-| FR-7.4 | Export directly from the dashboard view (summary data) as well as the ticket list | ⏳ |
+| FR-7.4 | Export directly from the dashboard view (summary data) as well as the ticket list | ✅ Summary CSV and Excel export on dashboard |
 
 ### Authentication and SSO (FR-8.x)
 | ID | Requirement | Status |
