@@ -35,9 +35,11 @@ export function TicketTable({
     onSelectionChange(next);
   };
 
+  const allChecked = items.length > 0 && items.every((t) => selectedNumbers?.has(t.number));
+
   const toggleAll = () => {
     if (!onSelectionChange || !selectedNumbers) return;
-    if (selectedNumbers.size === items.length) {
+    if (allChecked) {
       onSelectionChange(new Set());
     } else {
       onSelectionChange(new Set(items.map((t) => t.number)));
@@ -80,7 +82,7 @@ export function TicketTable({
               <th className="col-check">
                 <input
                   type="checkbox"
-                  checked={selectedNumbers?.size === items.length && items.length > 0}
+                  checked={allChecked}
                   onChange={toggleAll}
                   aria-label="Select all tickets"
                 />
