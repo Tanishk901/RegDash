@@ -18,8 +18,12 @@ export function triageRoutes({ triageEngine, triageStore, ticketStore }: TriageR
   const r = Router();
 
   r.get("/queue", (req, res) => {
-    const status = req.query.status as "pending" | "approved" | "rejected" | undefined;
-    res.json(triageStore.queue(status));
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const valid = ["pending", "approved", "rejected"];
+    if (status && !valid.includes(status)) {
+      return res.status(400).json({ error: `status must be one of: ${valid.join(", ")}` });
+    }
+    res.json(triageStore.queue(status as "pending" | "approved" | "rejected" | undefined));
   });
 
   r.get("/stats", (_req, res) => {
@@ -27,8 +31,12 @@ export function triageRoutes({ triageEngine, triageStore, ticketStore }: TriageR
   });
 
   r.get("/queue.csv", (req, res) => {
-    const status = req.query.status as "pending" | "approved" | "rejected" | undefined;
-    const items = triageStore.queue(status);
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    const valid = ["pending", "approved", "rejected"];
+    if (status && !valid.includes(status)) {
+      return res.status(400).json({ error: `status must be one of: ${valid.join(", ")}` });
+    }
+    const items = triageStore.queue(status as "pending" | "approved" | "rejected" | undefined);
     const header = "Ticket,Priority,Category,Assignee,Confidence,Status,Reasoning,Created,Reviewed At\n";
     const rows = items.map((s) =>
       [
@@ -110,16 +118,20 @@ export function triageRoutes({ triageEngine, triageStore, ticketStore }: TriageR
   r.put("/:id/approve", async (req, res) => {
     const parsed = ReviewBody.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+    const existing = triageStore.get(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Triage item not found" });
     const item = await triageStore.approve(req.params.id, parsed.data.by);
-    if (!item) return res.status(404).json({ error: "Triage item not found" });
+    if (!item) return res.status(409).json({ error: "Triage item is not pending" });
     res.json(item);
   });
 
   r.put("/:id/reject", async (req, res) => {
     const parsed = ReviewBody.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+    const existing = triageStore.get(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Triage item not found" });
     const item = await triageStore.reject(req.params.id, parsed.data.by);
-    if (!item) return res.status(404).json({ error: "Triage item not found" });
+    if (!item) return res.status(409).json({ error: "Triage item is not pending" });
     res.json(item);
   });
 
