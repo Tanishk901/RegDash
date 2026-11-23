@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { EMAIL_TEMPLATE_KINDS } from "@regdash/shared";
 import { api, usePolling, type EmailTemplateCreateInput, type EmailTemplateListItem, type MergeField, type AutomationConfig } from "../lib/api";
 
@@ -8,12 +8,12 @@ function MergeFieldHelp({ fields }: { fields: MergeField[] }) {
       <summary className="muted small" style={{ cursor: "pointer" }}>Available merge fields</summary>
       <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "2px 12px", fontSize: 13, marginTop: 4, padding: 8, background: "var(--surface)", borderRadius: "var(--radius-xs)" }}>
         {fields.map((f) => (
-          <span key={f.key}>
-            <code style={{ background: "var(--bg)", padding: "1px 4px", borderRadius: 3 }}>{`{{${f.key}}}`}</code>
-          </span>
-        ))}
-        {fields.map((f) => (
-          <span key={f.key + "-label"} className="muted">{f.label}</span>
+          <Fragment key={f.key}>
+            <span>
+              <code style={{ background: "var(--bg)", padding: "1px 4px", borderRadius: 3 }}>{`{{${f.key}}}`}</code>
+            </span>
+            <span className="muted">{f.label}</span>
+          </Fragment>
         ))}
       </div>
     </details>
