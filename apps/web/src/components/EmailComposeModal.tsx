@@ -14,6 +14,7 @@ export function EmailComposeModal({
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplateListItem | null>(null);
   const [preview, setPreview] = useState<{ subject: string; body: string } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -43,6 +44,7 @@ export function EmailComposeModal({
   const send = async () => {
     if (!to.trim() || !subject.trim()) return;
     setSending(true);
+    setSendError(null);
     try {
       await api.sendEmail({
         to: to.trim(),
@@ -53,8 +55,8 @@ export function EmailComposeModal({
       });
       setSent(true);
       setTimeout(onClose, 1500);
-    } catch {
-      /* */
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : "Failed to send email");
     } finally {
       setSending(false);
     }
@@ -110,6 +112,7 @@ export function EmailComposeModal({
         )}
 
         {sent && <p className="confirm-fade small">Email sent.</p>}
+        {sendError && <p className="error small">{sendError}</p>}
 
         <div className="vb-actions">
           <button onClick={send} disabled={sending || !to.trim() || !subject.trim()}>
