@@ -46,7 +46,7 @@ export class TriageStore {
 
   async approve(id: string, by: string): Promise<TriageSuggestion | undefined> {
     const item = this.items.get(id);
-    if (!item) return undefined;
+    if (!item || item.status !== "pending") return undefined;
     item.status = "approved";
     item.reviewedAt = new Date().toISOString();
     item.reviewedBy = by;
@@ -56,7 +56,7 @@ export class TriageStore {
 
   async reject(id: string, by: string): Promise<TriageSuggestion | undefined> {
     const item = this.items.get(id);
-    if (!item) return undefined;
+    if (!item || item.status !== "pending") return undefined;
     item.status = "rejected";
     item.reviewedAt = new Date().toISOString();
     item.reviewedBy = by;
