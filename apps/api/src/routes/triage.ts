@@ -37,16 +37,17 @@ export function triageRoutes({ triageEngine, triageStore, ticketStore }: TriageR
       return res.status(400).json({ error: `status must be one of: ${valid.join(", ")}` });
     }
     const items = triageStore.queue(status as "pending" | "approved" | "rejected" | undefined);
+    const esc = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
     const header = "Ticket,Priority,Category,Assignee,Confidence,Status,Reasoning,Created,Reviewed At\n";
     const rows = items.map((s) =>
       [
-        s.ticketNumber,
-        s.suggestedPriority,
-        s.suggestedCategory,
-        s.suggestedAssignee ?? "",
+        esc(s.ticketNumber),
+        esc(s.suggestedPriority),
+        esc(s.suggestedCategory),
+        esc(s.suggestedAssignee ?? ""),
         String(s.confidence),
-        s.status,
-        `"${s.reasoning.replace(/"/g, '""')}"`,
+        esc(s.status),
+        esc(s.reasoning),
         s.createdAt,
         s.reviewedAt ?? "",
       ].join(","),
