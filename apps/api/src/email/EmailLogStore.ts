@@ -44,7 +44,7 @@ export class EmailLogStore {
   }
 
   byTicket(ticketNumber: string): EmailLogEntry[] {
-    return this.entries.filter((e) => e.ticketNumber === ticketNumber);
+    return this.entries.filter((e) => e.ticketNumber === ticketNumber).reverse();
   }
 
   async add(input: EmailLogInput): Promise<EmailLogEntry> {
