@@ -104,7 +104,7 @@ export function TriageQueuePage() {
     try {
       await api.triageBulk([...selected], action);
       setSelected(new Set());
-      await Promise.all([queue.reload(), stats.reload()]);
+      await Promise.all([queue.reload(), stats.reload(), trend.reload()]);
     } catch { /* */ } finally {
       setBulking(false);
     }
@@ -127,6 +127,7 @@ export function TriageQueuePage() {
   const refresh = () => {
     void queue.reload();
     void stats.reload();
+    void trend.reload();
   };
 
   return (
