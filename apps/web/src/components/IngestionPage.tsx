@@ -98,6 +98,7 @@ export function IngestionPage() {
   const { data: queue, reload } = usePolling(() => api.ingestionQueue(statusFilter || undefined), [statusFilter], 0);
   const [selected, setSelected] = useState<IngestDraft | null>(null);
   const [polling, setPolling] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const poll = async () => {
     setPolling(true);
@@ -111,15 +112,25 @@ export function IngestionPage() {
   };
 
   const handleApprove = async (id: string) => {
-    await api.ingestionApprove(id, "Current User");
-    await reload();
-    await reloadStats();
+    setActionError(null);
+    try {
+      await api.ingestionApprove(id, "Current User");
+      await reload();
+      await reloadStats();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Failed to approve draft");
+    }
   };
 
   const handleReject = async (id: string, reason: string) => {
-    await api.ingestionReject(id, "Current User", reason);
-    await reload();
-    await reloadStats();
+    setActionError(null);
+    try {
+      await api.ingestionReject(id, "Current User", reason);
+      await reload();
+      await reloadStats();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Failed to reject draft");
+    }
   };
 
   return (
@@ -166,6 +177,10 @@ export function IngestionPage() {
           <option value="rejected">Rejected</option>
         </select>
       </div>
+
+      {actionError && (
+        <div className="banner banner-error" role="alert">{actionError}</div>
+      )}
 
       {queue && queue.length === 0 && (
         <p className="muted">
