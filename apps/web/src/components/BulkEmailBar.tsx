@@ -12,18 +12,20 @@ export function BulkEmailBar({
   const [templateId, setTemplateId] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   if (selectedNumbers.size === 0) return null;
 
   const send = async () => {
     if (!templateId) return;
     setSending(true);
+    setError(null);
     try {
       const r = await api.bulkSend(templateId, [...selectedNumbers]);
       setResult(r);
       setTimeout(() => { setResult(null); onDone(); }, 2000);
-    } catch {
-      /* */
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to send bulk email");
     } finally {
       setSending(false);
     }
@@ -54,6 +56,7 @@ export function BulkEmailBar({
           Sent {result.sent}, failed {result.failed}
         </span>
       )}
+      {error && <span className="error small">{error}</span>}
     </div>
   );
 }
